@@ -7,55 +7,49 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #000; /* רקע שחור נקי */
+    background: #000; /* רקע שחור עמוק */
     overflow-x: hidden;
     position: relative;
 }
 
-/* --- כוכבים נופלים --- */
-.stars-container {
+/* --- כוכבים מנצנצים --- */
+.stars-wrapper {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     z-index: -1;
-    pointer-events: none;
-    /* גרדיאנט עדין שנותן עומק לחלל */
-    background: radial-gradient(ellipse at bottom, #1B2735 0%, #000000 100%);
+    background: radial-gradient(ellipse at bottom, #0d1d31 0%, #000000 100%);
 }
 
-.shooting-star {
+.star {
     position: absolute;
-    left: 50%;
-    top: 50%;
-    height: 2px;
-    background: linear-gradient(-45deg, #ffffff, rgba(0, 0, 255, 0));
-    border-radius: 999px;
-    filter: drop-shadow(0 0 6px #ffffff);
-    animation: tail 3s ease-in-out infinite, shooting 3s ease-in-out infinite;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.3;
+    animation: twinkle var(--duration) infinite ease-in-out;
 }
 
-@keyframes tail {
-    0% { width: 0; }
-    30% { width: 100px; }
-    100% { width: 0; }
+@keyframes twinkle {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 10px white; }
 }
 
-@keyframes shooting {
-    0% { transform: translateX(0) translateY(0) rotate(45deg); }
-    100% { transform: translateX(-1200px) translateY(1200px) rotate(45deg); }
-}
+/* מיקומים אקראיים לכוכבים */
+.star:nth-child(1) { top: 10%; left: 10%; width: 2px; height: 2px; --duration: 3s; }
+.star:nth-child(2) { top: 30%; left: 80%; width: 3px; height: 3px; --duration: 2s; }
+.star:nth-child(3) { top: 70%; left: 40%; width: 2px; height: 2px; --duration: 4s; }
+.star:nth-child(4) { top: 20%; left: 50%; width: 1px; height: 1px; --duration: 3.5s; }
+.star:nth-child(5) { top: 90%; left: 15%; width: 3px; height: 3px; --duration: 2.5s; }
+.star:nth-child(6) { top: 15%; left: 85%; width: 2px; height: 2px; --duration: 3s; }
+.star:nth-child(7) { top: 45%; left: 25%; width: 2px; height: 2px; --duration: 5s; }
+.star:nth-child(8) { top: 65%; left: 75%; width: 1px; height: 1px; --duration: 2.8s; }
+.star:nth-child(9) { top: 80%; left: 90%; width: 2px; height: 2px; --duration: 4.2s; }
+.star:nth-child(10) { top: 5%; left: 35%; width: 3px; height: 3px; --duration: 3.3s; }
+/* ניתן להוסיף עוד כוכבים באותו אופן */
 
-.shooting-star:nth-child(1) { top: 10%; right: 10%; animation-delay: 0s; }
-.shooting-star:nth-child(2) { top: 0; right: 40%; animation-delay: 1.2s; }
-.shooting-star:nth-child(3) { top: 20%; right: 70%; animation-delay: 2.5s; }
-.shooting-star:nth-child(4) { top: 50%; right: 20%; animation-delay: 0.8s; }
-.shooting-star:nth-child(5) { top: 40%; right: 50%; animation-delay: 2s; }
-.shooting-star:nth-child(6) { top: 60%; right: 80%; animation-delay: 1.5s; }
-.shooting-star:nth-child(7) { top: 5%; right: 90%; animation-delay: 3s; }
-
-/* --- חלון המשחק (אפקט זכוכית כחול) --- */
+/* --- חלון המשחק (אפקט זכוכית) --- */
 .card {
     background: rgba(15, 23, 42, 0.75); /* כחול כהה שקוף */
     backdrop-filter: blur(20px);
@@ -64,23 +58,20 @@ body {
     border-radius: 2.5rem;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9);
     color: white;
-    position: relative;
     z-index: 10;
 }
 
-/* --- כפתורים ופקדים --- */
+/* --- כפתורים --- */
 .btn-primary {
     background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     color: white;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 4px 15px rgba(29, 78, 216, 0.4);
-    border: 1px solid rgba(255,255,255,0.1);
 }
 
 .btn-primary:hover {
     transform: translateY(-3px) scale(1.02);
     box-shadow: 0 12px 30px rgba(29, 78, 216, 0.6);
-    filter: brightness(1.2);
 }
 
 .diff-btn {
@@ -92,7 +83,6 @@ body {
 .diff-btn.active-diff {
     background: #3b82f6 !important;
     color: white !important;
-    border-color: #60a5fa !important;
     box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
 }
 
@@ -104,13 +94,12 @@ body {
 
 .option-btn:hover:not(:disabled) {
     background: rgba(255,255,255,0.15);
-    transform: scale(1.01);
 }
 
 .correct { background: #059669 !important; border-color: #10b981 !important; }
 .wrong { background: #dc2626 !important; border-color: #ef4444 !important; }
 
-/* --- צבעי זירות (לשלב 2) --- */
+/* --- צבעי זירות --- */
 .arena-color-1 { border-right: 5px solid #ef4444; background: rgba(239, 68, 68, 0.15) !important; }
 .arena-color-2 { border-right: 5px solid #3b82f6; background: rgba(59, 130, 246, 0.15) !important; }
 .arena-color-3 { border-right: 5px solid #10b981; background: rgba(16, 185, 129, 0.15) !important; }
