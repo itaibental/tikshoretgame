@@ -9,30 +9,27 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 <body>
-    <div class="stars-wrapper">
-        <div class="star"></div><div class="star"></div><div class="star"></div>
-        <div class="star"></div><div class="star"></div><div class="star"></div>
-        <div class="star"></div><div class="star"></div><div class="star"></div>
-        <div class="star"></div><div class="star"></div><div class="star"></div>
-        <div class="star"></div><div class="star"></div><div class="star"></div>
-        <div class="star"></div><div class="star"></div><div class="star"></div>
-        <div class="star"></div><div class="star"></div>
+    <div class="stars-container">
+        <div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div>
+        <div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div>
+        <div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div>
+        <div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div>
     </div>
 
     <div id="app-container" class="w-full max-w-2xl px-4 py-8">
         
         <div id="screen-welcome" class="card p-8 text-center animate-pop">
-            <h1 class="text-5xl font-black mb-2 text-blue-400">חידון הזירות הגדול</h1>
-            <p class="text-gray-400 mb-8 font-light">תרגול מושגים לקראת בחינת הבגרות</p>
+            <h1 class="text-4xl md:text-5xl font-black mb-2 text-blue-400">חידון הזירות הגדול</h1>
+            <p class="text-gray-400 mb-8 font-light italic">תרגול מושגים לבגרות בתקשורת וחברה</p>
             
             <div class="flex flex-col gap-4 mb-8">
-                <input type="text" id="input-username" placeholder="שם התלמיד/ה" 
+                <input type="text" id="input-username" placeholder="שם מלא של התלמיד/ה" 
                        class="w-full bg-black/40 border border-white/20 p-4 rounded-xl text-center text-xl text-white outline-none focus:border-blue-500 transition-all">
                 <input type="text" id="input-school" placeholder="שם בית הספר" 
                        class="w-full bg-black/40 border border-white/20 p-4 rounded-xl text-center text-xl text-white outline-none focus:border-blue-500 transition-all">
             </div>
             
-            <div class="mb-8 p-5 bg-white/5 rounded-2xl border border-white/5">
+            <div class="mb-8 p-5 bg-white/5 rounded-2xl border border-white/10">
                 <p class="text-blue-300 mb-4 font-bold text-lg">בחר רמת קושי (1-5):</p>
                 <div class="flex justify-between gap-2">
                     <button onclick="GameEngine.setDifficulty(1)" class="diff-btn flex-grow py-3 rounded-xl border border-white/10 hover:bg-blue-500/30 transition-all active-diff" data-val="1">1</button>
@@ -53,12 +50,13 @@
                 <div id="arena-list" class="grid grid-cols-1 gap-3 mb-8 max-h-64 overflow-y-auto pr-2"></div>
                 <button onclick="GameEngine.goToConceptSelection()" class="btn-primary w-full py-4 rounded-2xl text-xl font-bold">המשך לבחירת מושגים</button>
             </div>
+
             <div id="step-2-concepts" class="hidden">
                 <h2 class="text-3xl font-bold mb-6 text-center text-blue-400">שלב 2: בחירת מושגים</h2>
                 <div id="concept-list" class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-8 max-h-80 overflow-y-auto pr-2"></div>
                 <div class="flex flex-col gap-3">
                     <button onclick="GameEngine.startGame()" class="btn-primary w-full py-4 rounded-2xl text-xl font-bold">התחל משחק!</button>
-                    <button onclick="GameEngine.backToArenas()" class="text-gray-500 hover:text-white text-sm">חזור לבחירת זירות</button>
+                    <button onclick="GameEngine.backToArenas()" class="text-gray-500 hover:text-white transition-colors text-sm text-center underline">חזור לבחירת זירות</button>
                 </div>
             </div>
         </div>
@@ -66,21 +64,26 @@
         <div id="screen-game" class="hidden flex flex-col gap-4">
             <div class="flex justify-between items-center px-4 py-3 bg-black/40 rounded-2xl border border-white/10 text-sm">
                 <div class="flex flex-col">
-                    <span id="display-player" class="font-bold text-blue-400"></span>
-                    <span id="display-school" class="text-xs text-gray-400"></span>
+                    <span id="display-player" class="font-bold text-blue-400 text-lg"></span>
+                    <span id="display-school" class="text-xs text-gray-400 italic"></span>
                 </div>
                 <div class="flex gap-4 items-center">
-                    <span id="display-timer" class="text-red-400 font-mono text-xl font-bold">60s</span>
-                    <span id="display-score" class="text-green-400 font-bold">0</span>
+                    <span id="display-timer" class="text-red-400 font-mono text-2xl font-bold">60s</span>
+                    <div class="text-center bg-white/5 px-3 py-1 rounded-xl">
+                        <p class="text-[10px] text-gray-500">ניקוד</p>
+                        <p id="display-score" class="font-bold text-green-400 text-lg">0</p>
+                    </div>
                 </div>
             </div>
+            
             <div class="card p-8">
                 <div id="display-arena" class="text-xs uppercase tracking-widest text-blue-400 mb-2 font-bold border-b border-white/10 pb-2"></div>
-                <h3 id="display-question" class="text-2xl font-bold mb-8 text-white"></h3>
+                <h3 id="display-question" class="text-2xl font-bold mb-8 leading-tight text-white"></h3>
                 <div id="options-container" class="grid gap-3"></div>
             </div>
-            <div id="feedback-area" class="hidden card p-6 border-r-4 border-blue-500">
-                <p id="feedback-text" class="text-gray-200"></p>
+
+            <div id="feedback-area" class="hidden card p-6 border-r-4 border-blue-500 animate-pop">
+                <p id="feedback-text" class="text-gray-200 leading-relaxed"></p>
                 <button id="next-btn" class="btn-primary mt-6 px-10 py-3 rounded-xl font-bold">המשך</button>
             </div>
         </div>
@@ -88,16 +91,18 @@
         <div id="screen-results" class="hidden card p-10 text-center">
             <h2 class="text-4xl font-black mb-2 text-blue-400">סיכום תרגול</h2>
             <div class="text-8xl font-black mb-8 text-white" id="final-score-val">0</div>
+            
             <div class="bg-black/40 p-6 rounded-3xl mb-8 text-right border border-white/10 inline-block mx-auto min-w-[300px]">
-                <p class="mb-3 border-b border-white/5 pb-2"><span class="text-gray-400">תלמיד/ה:</span> <span id="res-name" class="font-bold"></span></p>
-                <p class="mb-3 border-b border-white/5 pb-2"><span class="text-gray-400">בית ספר:</span> <span id="res-school" class="font-bold"></span></p>
-                <p class="mb-3 border-b border-white/5 pb-2"><span class="text-gray-400">רמה:</span> <span id="res-difficulty" class="font-bold text-blue-400"></span></p>
-                <p class="mb-0"><span class="text-gray-400">סבבים:</span> <span id="res-rounds" class="font-bold text-yellow-500"></span></p>
+                <p class="mb-3 border-b border-white/5 pb-2"><span class="text-gray-400">תלמיד/ה:</span> <span id="res-name" class="font-bold text-white"></span></p>
+                <p class="mb-3 border-b border-white/5 pb-2"><span class="text-gray-400">בית ספר:</span> <span id="res-school" class="font-bold text-white"></span></p>
+                <p class="mb-3 border-b border-white/5 pb-2"><span class="text-gray-400">רמת קושי שבוצעה:</span> <span id="res-difficulty" class="font-bold text-blue-400"></span></p>
+                <p class="mb-0"><span class="text-gray-400">סבבים שבוצעו:</span> <span id="res-rounds" class="font-bold text-yellow-500"></span></p>
             </div>
+            
             <button onclick="location.reload()" class="btn-primary w-full py-4 rounded-2xl text-xl font-bold">תרגול חדש</button>
         </div>
 
-        <footer class="mt-8 text-center text-gray-500 text-xs font-light tracking-wide">
+        <footer class="mt-12 text-center text-white/30 text-xs font-light tracking-widest">
             המשחק נוצר ע"י איתי בן טל
         </footer>
     </div>
