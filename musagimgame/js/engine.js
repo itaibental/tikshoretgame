@@ -21,7 +21,14 @@ signInAnonymously(auth).catch(e => console.error(e));
 onAuthStateChanged(auth, user => { if(user) currentUser = user; });
 
 const GameEngine = {
-    state: { playerName: "", currentQuestions: [], currentIndex: 0, score: 0, timerInterval: null },
+    state: { 
+        playerName: "", 
+        currentQuestions: [], 
+        currentIndex: 0, 
+        score: 0, 
+        timerInterval: null,
+        selectedArenas: [] 
+    },
     
     arenaDisplayNames: {
         "זירה 1": "זירה 1: להבין ולפרש את המציאות", "זירה 2": "זירה 2: גלובליזציה",
@@ -39,46 +46,72 @@ const GameEngine = {
     },
 
     goToSelection() {
-    const name = document.getElementById('input-username').value.trim();
-    if(!name) { alert("נא להזין שם"); return; }
-    if (window.Sounds) Sounds.click();
-    this.state.playerName = name;
-    const arenas = [...new Set(this.getDatabase().map(d => d.zira))].sort((a,b) => a.localeCompare(b, 'he', {numeric:true}));
-   document.getElementById('arena-list').innerHTML = arenas.map(a => `
-    <div class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
-        <input type="checkbox" id="arena-${a}" value="${a}" class="w-4 h-4 accent-yellow-500">
-        <label for="arena-${a}" class="flex-grow text-sm text-gray-200 cursor-pointer">${this.arenaDisplayNames[a] || a}</label>
-    </div>
-`).join('');
-    this.switchScreen('welcome', 'selection');
-},
-    
-    selectAll(val) { if(window.Sounds) Sounds.click(); document.querySelectorAll('#arena-list input').forEach(i => i.checked = val); },
+        const name = document.getElementById('input-username').value.trim();
+        if(!name) { alert("נא להזין שם"); return; }
+        if (window.Sounds) Sounds.click();
+        this.state.playerName = name;
+        const arenas = [...new Set(this.getDatabase().map(d => d.zira))].sort((a,b) => a.localeCompare(b, 'he', {numeric:true}));
+        document.getElementById('arena-list').innerHTML = arenas.map(a => `
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+                <input type="checkbox" id="arena-${a}" value="${a}" class="w-4 h-4 accent-yellow-500">
+                <label for="arena-${a}" class="flex-grow text-sm text-gray-200 cursor-pointer">${this.arenaDisplayNames[a] || a}</label>
+            </div>
+        `).join('');
+        this.switchScreen('welcome', 'selection');
+        // איפוס תצוגת השלבים
+        document.getElementById('step-1-arenas').classList.remove('hidden');
+        document.getElementById('step-2-concepts').classList.add('hidden');
+    },
+
+    selectAllArenas(val) { if(window.Sounds) Sounds.click(); document.querySelectorAll('#arena-list input').forEach(i => i.checked = val); },
+
+    goToConceptSelection() {
+        const checked = Array.from(document.querySelectorAll('#arena-list input:checked')).map(i => i.value);
+        if(checked.length === 0) { alert("נא לבחור לפחות זירה אחת"); return; }
+        if (window.Sounds) Sounds.click();
+        
+        this.state.selectedArenas = checked;
+        
+        // שליפת כל המושגים מהזירות שנבחרו
+        const pool = this.getDatabase().filter(q => checked.includes(q.zira));
+        const concepts = [...new Set(pool.map(q => q.concept || "כללי"))].sort();
+
+        document.getElementById('concept-list').innerHTML = concepts.map(c => `
+            <div class="flex items-center gap-3 p-2 rounded-lg bg-white/5 border border-white/10">
+                <input type="checkbox" id="concept-${c}" value="${c}" class="w-4 h-4 accent-cyan-500" checked>
+                <label for="concept-${c}" class="flex-grow text-xs text-gray-200 cursor-pointer">${c}</label>
+            </div>
+        `).join('');
+
+        document.getElementById('step-1-arenas').classList.add('hidden');
+        document.getElementById('step-2-concepts').classList.remove('hidden');
+    },
+
+    backToArenas() {
+        if (window.Sounds) Sounds.click();
+        document.getElementById('step-2-concepts').classList.add('hidden');
+        document.getElementById('step-1-arenas').classList.remove('hidden');
+    },
 
     startGame() {
-        const checked = Array.from(document.querySelectorAll('#arena-list input:checked')).map(i => i.value);
-        if(checked.length === 0) return;
+        const checkedConcepts = Array.from(document.querySelectorAll('#concept-list input:checked')).map(i => i.value);
+        if(checkedConcepts.length === 0) { alert("נא לבחור לפחות מושג אחד"); return; }
         if(window.Sounds) Sounds.click();
 
         const limit = parseInt(document.getElementById('input-question-count').value) || 10;
-        const pool = this.getDatabase().filter(d => checked.includes(d.zira));
-        let selected = [];
+        
+        // סינון שאלות שתואמות גם לזירות וגם למושגים שנבחרו
+        const pool = this.getDatabase().filter(q => 
+            this.state.selectedArenas.includes(q.zira) && 
+            checkedConcepts.includes(q.concept || "כללי")
+        );
 
-        if (checked.length > 3) {
-            const byArena = {};
-            checked.forEach(a => byArena[a] = pool.filter(q => q.zira === a).sort(() => Math.random() - 0.5));
-            let i = 0;
-            while (selected.length < limit && Object.values(byArena).some(arr => arr.length > 0)) {
-                const arena = checked[i % checked.length];
-                if (byArena[arena] && byArena[arena].length > 0) selected.push(byArena[arena].shift());
-                i++;
-            }
-        } else {
-            selected = pool.sort(() => Math.random() - 0.5).slice(0, limit);
-        }
+        if(pool.length === 0) { alert("לא נמצאו שאלות למושגים שנבחרו"); return; }
 
-        this.state.currentQuestions = selected;
-        this.state.currentIndex = 0; this.state.score = 0;
+        this.state.currentQuestions = pool.sort(() => Math.random() - 0.5).slice(0, limit);
+        this.state.currentIndex = 0; 
+        this.state.score = 0;
+        
         document.getElementById('display-player').innerText = `שלום, ${this.state.playerName}`;
         this.switchScreen('selection', 'game');
         this.renderQuestion();
@@ -102,7 +135,7 @@ const GameEngine = {
     renderQuestion() {
         const q = this.state.currentQuestions[this.state.currentIndex];
         document.getElementById('feedback-area').classList.add('hidden');
-        document.getElementById('display-arena').innerText = q.zira;
+        document.getElementById('display-arena').innerText = `${q.zira} | ${q.concept || ''}`;
         document.getElementById('display-question').innerText = q.q;
         document.getElementById('progress-bar').style.width = `${(this.state.currentIndex / this.state.currentQuestions.length) * 100}%`;
         const shuffled = q.a.map((ans, i) => ({ ans, i })).sort(() => Math.random() - 0.5);
@@ -192,7 +225,3 @@ const GameEngine = {
     switchScreen(outId, inId) { document.getElementById(`screen-${outId}`).classList.add('hidden'); document.getElementById(`screen-${inId}`).classList.remove('hidden'); }
 };
 window.GameEngine = GameEngine;
-
-
-
-
