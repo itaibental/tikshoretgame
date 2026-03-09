@@ -21,6 +21,21 @@ const GameEngine = {
         selectedArenas: []
     },
 
+    // מיפוי שמות מלאים לזירות כפי שביקשת
+    arenaDisplayNames: {
+        "זירה 1": "זירה 1 – להבין ולפרש את המציאות",
+        "זירה 2": "זירה 2 – גלובליזציה",
+        "זירה 3": "זירה 3 – חדשות וצילום עיתונאי",
+        "זירה 4": "זירה 4 – הומור וסאטירה",
+        "זירה 5": "זירה 5 – תרבות דיגיטלית",
+        "זירה 6": "זירה 6 – תוכניות ריאליטי",
+        "זירה 7": "זירה 7 – קליפים",
+        "זירה 8": "זירה 8 – תקשורת וספורט",
+        "זירה 9": "זירה 9 – פרסומות",
+        "זירת העל": "זירת העל"
+    },
+
+    // הגדרת קלאסים לצבעים לכל זירה (בהתאם ל-CSS)
     arenaConfig: {
         "זירה 1": "arena-color-1", "זירה 2": "arena-color-2", "זירה 3": "arena-color-3",
         "זירה 4": "arena-color-4", "זירה 5": "arena-color-5", "זירה 6": "arena-color-6",
@@ -31,9 +46,11 @@ const GameEngine = {
     setDifficulty(val) {
         this.state.difficulty = val;
         document.querySelectorAll('.diff-btn').forEach(btn => {
-            btn.classList.remove('bg-blue-500', 'text-white', 'font-bold');
-            if(parseInt(btn.dataset.val) === val) btn.classList.add('bg-blue-500', 'text-white', 'font-bold');
+            btn.classList.remove('active-diff');
+            if(parseInt(btn.dataset.val) === val) btn.classList.add('active-diff');
         });
+        const difficultyMap = { 1: 5, 2: 10, 3: 15, 4: 25, 5: 40 };
+        document.getElementById('difficulty-desc').innerText = `רמה ${val}: ${difficultyMap[val]} שאלות לסיבוב`;
         if (window.Sounds) Sounds.click();
     },
 
@@ -50,11 +67,14 @@ const GameEngine = {
         if(!this.state.playerName || !this.state.schoolName) { alert("נא להזין שם ובית ספר"); return; }
         
         if (window.Sounds) Sounds.click();
-        const arenas = [...new Set(this.getDatabase().map(d => d.zira))].sort();
+        const arenas = [...new Set(this.getDatabase().map(d => d.zira))].sort((a,b) => a.localeCompare(b, 'he', {numeric:true}));
+        
         document.getElementById('arena-list').innerHTML = arenas.map(a => `
-            <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
                 <input type="checkbox" id="arena-${a}" value="${a}" class="w-5 h-5 accent-blue-500">
-                <label for="arena-${a}" class="flex-grow cursor-pointer text-sm">${a}</label>
+                <label for="arena-${a}" class="flex-grow cursor-pointer text-sm font-medium">
+                    ${this.arenaDisplayNames[a] || a}
+                </label>
             </div>
         `).join('');
         this.switchScreen('welcome', 'selection');
@@ -62,20 +82,27 @@ const GameEngine = {
 
     goToConceptSelection() {
         const checked = Array.from(document.querySelectorAll('#arena-list input:checked')).map(i => i.value);
-        if(checked.length === 0) { alert("בחר לפחות זירה אחת"); return; }
+        if(checked.length === 0) { alert("נא לבחור לפחות זירה אחת"); return; }
         this.state.selectedArenas = checked;
         if (window.Sounds) Sounds.click();
 
         const pool = this.getDatabase().filter(q => checked.includes(q.zira));
-        const conceptsWithArena = pool.map(q => ({ name: q.concept || "כללי", arena: q.zira }));
-        const uniqueConcepts = Array.from(new Set(conceptsWithArena.map(c => JSON.stringify(c)))).map(s => JSON.parse(s));
+        // חילוץ מושגים ייחודיים ושמירת הקשר לזירה שלהם לצורך צביעה
+        const conceptsMap = {};
+        pool.forEach(q => {
+            const cName = q.concept || "כללי";
+            if(!conceptsMap[cName]) conceptsMap[cName] = q.zira;
+        });
 
-        document.getElementById('concept-list').innerHTML = uniqueConcepts.map(c => {
-            const colorClass = this.arenaConfig[c.arena] || "";
+        const sortedConcepts = Object.keys(conceptsMap).sort();
+
+        document.getElementById('concept-list').innerHTML = sortedConcepts.map(cName => {
+            const arenaName = conceptsMap[cName];
+            const colorClass = this.arenaConfig[arenaName] || "";
             return `
-                <div class="flex items-center gap-3 p-3 rounded-xl ${colorClass} bg-opacity-20 hover:bg-opacity-40 transition-all">
-                    <input type="checkbox" id="concept-${c.name}" value="${c.name}" class="w-4 h-4 accent-white" checked>
-                    <label for="concept-${c.name}" class="flex-grow cursor-pointer text-xs font-medium text-white">${c.name}</label>
+                <div class="flex items-center gap-3 p-3 rounded-xl ${colorClass} transition-all">
+                    <input type="checkbox" id="concept-${cName}" value="${cName}" class="w-4 h-4 accent-white" checked>
+                    <label for="concept-${cName}" class="flex-grow cursor-pointer text-xs font-bold text-white">${cName}</label>
                 </div>
             `;
         }).join('');
@@ -86,10 +113,9 @@ const GameEngine = {
 
     startGame() {
         const checkedConcepts = Array.from(document.querySelectorAll('#concept-list input:checked')).map(i => i.value);
-        if(checkedConcepts.length === 0) { alert("בחר לפחות מושג אחד"); return; }
+        if(checkedConcepts.length === 0) { alert("נא לבחור לפחות מושג אחד"); return; }
         if (window.Sounds) Sounds.click();
 
-        // קביעת כמות שאלות לפי רמת קושי: 1=5, 2=10, 3=15, 4=25, 5=40
         const difficultyMap = { 1: 5, 2: 10, 3: 15, 4: 25, 5: 40 };
         const limit = difficultyMap[this.state.difficulty];
 
@@ -104,7 +130,7 @@ const GameEngine = {
 
         document.getElementById('display-player').innerText = this.state.playerName;
         document.getElementById('display-school').innerText = this.state.schoolName;
-        document.getElementById('display-difficulty').innerText = `רמה: ${this.state.difficulty}`;
+        document.getElementById('display-difficulty').innerText = this.state.difficulty;
         
         this.switchScreen('selection', 'game');
         this.renderQuestion();
@@ -113,12 +139,12 @@ const GameEngine = {
     renderQuestion() {
         const q = this.state.currentQuestions[this.state.currentIndex];
         document.getElementById('feedback-area').classList.add('hidden');
-        document.getElementById('display-arena').innerText = `${q.zira} | ${q.concept || ''}`;
+        document.getElementById('display-arena').innerText = `${this.arenaDisplayNames[q.zira] || q.zira} | ${q.concept || ''}`;
         document.getElementById('display-question').innerText = q.q;
         
         const shuffled = q.a.map((ans, i) => ({ ans, i })).sort(() => Math.random() - 0.5);
         document.getElementById('options-container').innerHTML = shuffled.map(item => `
-            <button onclick="GameEngine.handleAnswer(${item.i})" class="option-btn text-white text-right p-4 rounded-xl bg-white/5 w-full font-medium">
+            <button onclick="GameEngine.handleAnswer(${item.i})" class="option-btn text-white text-right p-4 rounded-2xl bg-white/5 w-full font-medium">
                 ${item.ans}
             </button>
         `).join('');
@@ -145,7 +171,7 @@ const GameEngine = {
 
         buttons.forEach(b => {
             b.disabled = true;
-            const bIdx = parseInt(b.getAttribute('onclick').match(/\d+/)[0]);
+            const bIdx = parseInt(b.getAttribute('onclick').match(/-?\d+/)[0]);
             if (bIdx === q.correct) b.classList.add('correct');
             if (idx !== -1 && bIdx === idx && idx !== q.correct) b.classList.add('wrong');
         });
@@ -153,7 +179,7 @@ const GameEngine = {
         if(idx === q.correct) { 
             this.state.score += pointsPerQ; 
             if(window.Sounds) Sounds.correct();
-            confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
+            confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
         } else { if(window.Sounds) Sounds.wrong(); }
 
         document.getElementById('display-score').innerText = Math.round(this.state.score);
@@ -166,7 +192,7 @@ const GameEngine = {
         };
     },
 
-    async finishGame() {
+    finishGame() {
         if(window.Sounds) Sounds.gameOver();
         const final = Math.round(this.state.score);
         this.switchScreen('game', 'results');
@@ -175,17 +201,6 @@ const GameEngine = {
         document.getElementById('res-school').innerText = this.state.schoolName;
         document.getElementById('res-difficulty').innerText = this.state.difficulty;
         document.getElementById('res-rounds').innerText = this.state.roundsPlayed;
-
-        // שמירה ל-Firebase
-        const reportId = `${Date.now()}-${this.state.playerName}`;
-        await setDoc(doc(db, "results", reportId), {
-            name: this.state.playerName,
-            school: this.state.schoolName,
-            score: final,
-            difficulty: this.state.difficulty,
-            rounds: this.state.roundsPlayed,
-            timestamp: new Date()
-        });
     },
 
     backToArenas() {
