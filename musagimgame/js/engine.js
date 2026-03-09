@@ -10,18 +10,10 @@ signInAnonymously(auth);
 
 const GameEngine = {
     state: {
-        playerName: "",
-        schoolName: "",
-        difficulty: 1,
-        roundsPlayed: 0,
-        currentQuestions: [],
-        currentIndex: 0,
-        score: 0,
-        timerInterval: null,
-        selectedArenas: []
+        playerName: "", schoolName: "", difficulty: 1, roundsPlayed: 0,
+        currentQuestions: [], currentIndex: 0, score: 0, timerInterval: null, selectedArenas: []
     },
 
-    // מיפוי שמות מלאים לזירות כפי שביקשת
     arenaDisplayNames: {
         "זירה 1": "זירה 1 – להבין ולפרש את המציאות",
         "זירה 2": "זירה 2 – גלובליזציה",
@@ -35,7 +27,6 @@ const GameEngine = {
         "זירת העל": "זירת העל"
     },
 
-    // הגדרת קלאסים לצבעים לכל זירה (בהתאם ל-CSS)
     arenaConfig: {
         "זירה 1": "arena-color-1", "זירה 2": "arena-color-2", "זירה 3": "arena-color-3",
         "זירה 4": "arena-color-4", "זירה 5": "arena-color-5", "זירה 6": "arena-color-6",
@@ -65,18 +56,13 @@ const GameEngine = {
         this.state.playerName = document.getElementById('input-username').value.trim();
         this.state.schoolName = document.getElementById('input-school').value.trim();
         if(!this.state.playerName || !this.state.schoolName) { alert("נא להזין שם ובית ספר"); return; }
-        
         if (window.Sounds) Sounds.click();
         const arenas = [...new Set(this.getDatabase().map(d => d.zira))].sort((a,b) => a.localeCompare(b, 'he', {numeric:true}));
-        
         document.getElementById('arena-list').innerHTML = arenas.map(a => `
             <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
                 <input type="checkbox" id="arena-${a}" value="${a}" class="w-5 h-5 accent-blue-500">
-                <label for="arena-${a}" class="flex-grow cursor-pointer text-sm font-medium">
-                    ${this.arenaDisplayNames[a] || a}
-                </label>
-            </div>
-        `).join('');
+                <label for="arena-${a}" class="flex-grow cursor-pointer text-sm font-medium text-white">${this.arenaDisplayNames[a] || a}</label>
+            </div>`).join('');
         this.switchScreen('welcome', 'selection');
     },
 
@@ -85,28 +71,17 @@ const GameEngine = {
         if(checked.length === 0) { alert("נא לבחור לפחות זירה אחת"); return; }
         this.state.selectedArenas = checked;
         if (window.Sounds) Sounds.click();
-
         const pool = this.getDatabase().filter(q => checked.includes(q.zira));
-        // חילוץ מושגים ייחודיים ושמירת הקשר לזירה שלהם לצורך צביעה
         const conceptsMap = {};
-        pool.forEach(q => {
-            const cName = q.concept || "כללי";
-            if(!conceptsMap[cName]) conceptsMap[cName] = q.zira;
-        });
-
+        pool.forEach(q => { const cName = q.concept || "כללי"; if(!conceptsMap[cName]) conceptsMap[cName] = q.zira; });
         const sortedConcepts = Object.keys(conceptsMap).sort();
-
         document.getElementById('concept-list').innerHTML = sortedConcepts.map(cName => {
             const arenaName = conceptsMap[cName];
-            const colorClass = this.arenaConfig[arenaName] || "";
-            return `
-                <div class="flex items-center gap-3 p-3 rounded-xl ${colorClass} transition-all">
-                    <input type="checkbox" id="concept-${cName}" value="${cName}" class="w-4 h-4 accent-white" checked>
-                    <label for="concept-${cName}" class="flex-grow cursor-pointer text-xs font-bold text-white">${cName}</label>
-                </div>
-            `;
+            return `<div class="flex items-center gap-3 p-3 rounded-xl ${this.arenaConfig[arenaName] || ''} transition-all">
+                <input type="checkbox" id="concept-${cName}" value="${cName}" class="w-4 h-4 accent-white" checked>
+                <label for="concept-${cName}" class="flex-grow cursor-pointer text-xs font-bold text-white">${cName}</label>
+            </div>`;
         }).join('');
-
         document.getElementById('step-1-arenas').classList.add('hidden');
         document.getElementById('step-2-concepts').classList.remove('hidden');
     },
@@ -115,23 +90,14 @@ const GameEngine = {
         const checkedConcepts = Array.from(document.querySelectorAll('#concept-list input:checked')).map(i => i.value);
         if(checkedConcepts.length === 0) { alert("נא לבחור לפחות מושג אחד"); return; }
         if (window.Sounds) Sounds.click();
-
         const difficultyMap = { 1: 5, 2: 10, 3: 15, 4: 25, 5: 40 };
         const limit = difficultyMap[this.state.difficulty];
-
-        const pool = this.getDatabase().filter(q => 
-            this.state.selectedArenas.includes(q.zira) && checkedConcepts.includes(q.concept || "כללי")
-        );
-
+        const pool = this.getDatabase().filter(q => this.state.selectedArenas.includes(q.zira) && checkedConcepts.includes(q.concept || "כללי"));
+        if(pool.length === 0) { alert("לא נמצאו שאלות לבחירה זו"); return; }
         this.state.currentQuestions = pool.sort(() => Math.random() - 0.5).slice(0, limit);
-        this.state.currentIndex = 0; 
-        this.state.score = 0;
-        this.state.roundsPlayed++;
-
+        this.state.currentIndex = 0; this.state.score = 0; this.state.roundsPlayed++;
         document.getElementById('display-player').innerText = this.state.playerName;
         document.getElementById('display-school').innerText = this.state.schoolName;
-        document.getElementById('display-difficulty').innerText = this.state.difficulty;
-        
         this.switchScreen('selection', 'game');
         this.renderQuestion();
     },
@@ -141,13 +107,11 @@ const GameEngine = {
         document.getElementById('feedback-area').classList.add('hidden');
         document.getElementById('display-arena').innerText = `${this.arenaDisplayNames[q.zira] || q.zira} | ${q.concept || ''}`;
         document.getElementById('display-question').innerText = q.q;
-        
         const shuffled = q.a.map((ans, i) => ({ ans, i })).sort(() => Math.random() - 0.5);
         document.getElementById('options-container').innerHTML = shuffled.map(item => `
-            <button onclick="GameEngine.handleAnswer(${item.i})" class="option-btn text-white text-right p-4 rounded-2xl bg-white/5 w-full font-medium">
+            <button onclick="GameEngine.handleAnswer(${item.i})" class="option-btn text-white p-4 rounded-2xl w-full font-medium">
                 ${item.ans}
-            </button>
-        `).join('');
+            </button>`).join('');
         this.startTimer();
     },
 
@@ -157,8 +121,7 @@ const GameEngine = {
         const display = document.getElementById('display-timer');
         display.innerText = `${timeLeft}s`;
         this.state.timerInterval = setInterval(() => {
-            timeLeft--;
-            display.innerText = `${timeLeft}s`;
+            timeLeft--; display.innerText = `${timeLeft}s`;
             if (timeLeft <= 0) { clearInterval(this.state.timerInterval); this.handleAnswer(-1); }
         }, 1000);
     },
@@ -168,20 +131,16 @@ const GameEngine = {
         const q = this.state.currentQuestions[this.state.currentIndex];
         const buttons = document.querySelectorAll('.option-btn');
         const pointsPerQ = 100 / this.state.currentQuestions.length;
-
         buttons.forEach(b => {
             b.disabled = true;
             const bIdx = parseInt(b.getAttribute('onclick').match(/-?\d+/)[0]);
             if (bIdx === q.correct) b.classList.add('correct');
             if (idx !== -1 && bIdx === idx && idx !== q.correct) b.classList.add('wrong');
         });
-
         if(idx === q.correct) { 
-            this.state.score += pointsPerQ; 
-            if(window.Sounds) Sounds.correct();
+            this.state.score += pointsPerQ; if(window.Sounds) Sounds.correct();
             confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
         } else { if(window.Sounds) Sounds.wrong(); }
-
         document.getElementById('display-score').innerText = Math.round(this.state.score);
         document.getElementById('feedback-text').innerHTML = `<strong>הסבר:</strong> ${q.rationale}`;
         document.getElementById('feedback-area').classList.remove('hidden');
@@ -192,7 +151,7 @@ const GameEngine = {
         };
     },
 
-    finishGame() {
+    async finishGame() {
         if(window.Sounds) Sounds.gameOver();
         const final = Math.round(this.state.score);
         this.switchScreen('game', 'results');
@@ -201,17 +160,20 @@ const GameEngine = {
         document.getElementById('res-school').innerText = this.state.schoolName;
         document.getElementById('res-difficulty').innerText = this.state.difficulty;
         document.getElementById('res-rounds').innerText = this.state.roundsPlayed;
-    },
-
-    backToArenas() {
-        document.getElementById('step-2-concepts').classList.add('hidden');
-        document.getElementById('step-1-arenas').classList.remove('hidden');
+        try {
+            await setDoc(doc(db, "results", `${Date.now()}-${this.state.playerName}`), {
+                name: this.state.playerName, school: this.state.schoolName, score: final, 
+                difficulty: this.state.difficulty, rounds: this.state.roundsPlayed, timestamp: new Date()
+            });
+        } catch(e) { console.error("Firebase error", e); }
     },
 
     switchScreen(outId, inId) {
         document.getElementById(`screen-${outId}`).classList.add('hidden');
         document.getElementById(`screen-${inId}`).classList.remove('hidden');
-    }
+    },
+
+    backToArenas() { document.getElementById('step-2-concepts').classList.add('hidden'); document.getElementById('step-1-arenas').classList.remove('hidden'); }
 };
 
 window.GameEngine = GameEngine;
