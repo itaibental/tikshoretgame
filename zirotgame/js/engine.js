@@ -11,14 +11,13 @@ const firebaseConfig = {
     appId: "1:421209892208:web:8ee30714c40b5084579bb5"
 };
 
-// אתחול Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = 'quiz-comm-2026';
 let currentUser = null;
 
-signInAnonymously(auth).catch(e => console.error("Firebase Auth Error:", e));
+signInAnonymously(auth).catch(e => console.error(e));
 onAuthStateChanged(auth, user => { if(user) currentUser = user; });
 
 const GameEngine = {
@@ -40,51 +39,28 @@ const GameEngine = {
     },
 
     goToSelection() {
-        console.log("Attempting to go to selection..."); // לוג לבדיקה
-        const nameInput = document.getElementById('input-username');
-        const name = nameInput ? nameInput.value.trim() : "";
-
-        if(!name) { 
-            alert("נא להזין שם כדי להמשיך"); 
-            return; 
-        }
-
+        const name = document.getElementById('input-username').value.trim();
+        if(!name) { alert("נא להזין שם"); return; }
         if (window.Sounds) Sounds.click();
         this.state.playerName = name;
-
-        const fullDb = this.getDatabase();
-        const arenas = [...new Set(fullDb.map(d => d.zira))].sort((a,b) => a.localeCompare(b, 'he', {numeric:true}));
-        
-        console.log("Arenas found:", arenas); // בדיקה אם נמצאו שאלות במאגר
-
-        const listContainer = document.getElementById('arena-list');
-        if (listContainer) {
-            listContainer.innerHTML = arenas.map(a => `
-                <div class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
-                    <input type="checkbox" id="arena-${a}" value="${a}" class="w-4 h-4 accent-yellow-500">
-                    <label for="arena-${a}" class="flex-grow text-sm text-gray-200 cursor-pointer">${this.arenaDisplayNames[a] || a}</label>
-                </div>
-            `).join('');
-        }
-        
+        const arenas = [...new Set(this.getDatabase().map(d => d.zira))].sort((a,b) => a.localeCompare(b, 'he', {numeric:true}));
+        document.getElementById('arena-list').innerHTML = arenas.map(a => `
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+                <input type="checkbox" id="arena-${a}" value="${a}" class="w-4 h-4 accent-yellow-500" checked>
+                <label for="arena-${a}" class="flex-grow text-sm text-gray-200 cursor-pointer">${this.arenaDisplayNames[a] || a}</label>
+            </div>
+        `).join('');
         this.switchScreen('welcome', 'selection');
     },
 
-    selectAll(val) { 
-        if(window.Sounds) Sounds.click(); 
-        document.querySelectorAll('#arena-list input').forEach(i => i.checked = val); 
-    },
+    selectAll(val) { if(window.Sounds) Sounds.click(); document.querySelectorAll('#arena-list input').forEach(i => i.checked = val); },
 
     startGame() {
         const checked = Array.from(document.querySelectorAll('#arena-list input:checked')).map(i => i.value);
-        if(checked.length === 0) {
-            alert("יש לבחור לפחות זירה אחת לתרגול");
-            return;
-        }
+        if(checked.length === 0) return;
         if(window.Sounds) Sounds.click();
 
-        const limitInput = document.getElementById('input-question-count');
-        const limit = limitInput ? parseInt(limitInput.value) : 10;
+        const limit = parseInt(document.getElementById('input-question-count').value) || 10;
         const pool = this.getDatabase().filter(d => checked.includes(d.zira));
         let selected = [];
 
@@ -102,9 +78,7 @@ const GameEngine = {
         }
 
         this.state.currentQuestions = selected;
-        this.state.currentIndex = 0; 
-        this.state.score = 0;
-        
+        this.state.currentIndex = 0; this.state.score = 0;
         document.getElementById('display-player').innerText = `שלום, ${this.state.playerName}`;
         this.switchScreen('selection', 'game');
         this.renderQuestion();
@@ -114,7 +88,6 @@ const GameEngine = {
         clearInterval(this.state.timerInterval);
         let timeLeft = 60;
         const display = document.getElementById('display-timer');
-        if (!display) return;
         display.innerText = `${timeLeft}s`;
         display.classList.remove('timer-low');
         this.state.timerInterval = setInterval(() => {
@@ -155,7 +128,7 @@ const GameEngine = {
         if(idx === q.correct) { 
             if(window.Sounds) Sounds.correct(); 
             this.state.score += pointsPerQ; 
-            if (window.confetti) confetti({ particleCount: 40, spread: 40, origin: { x: 0.5, y: 0.6 }, colors: ['#FFD700', '#FF8C00'] });
+            confetti({ particleCount: 40, spread: 40, origin: { x: 0.5, y: 0.6 }, colors: ['#FFD700', '#FF8C00'] });
         } else { if(window.Sounds) Sounds.wrong(); }
         document.getElementById('display-score').innerText = `ניקוד: ${Math.round(this.state.score)}`;
         document.getElementById('feedback-text').innerHTML = idx === -1 ? "<b>נגמר הזמן!</b><br>" + q.rationale : q.rationale;
@@ -171,15 +144,13 @@ const GameEngine = {
     async finishGame() {
         const finalScore = Math.round(this.state.score);
         if(window.Sounds) Sounds.gameOver();
-        if (finalScore >= 70 && window.confetti) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#FFD700', '#FF8C00', '#ffffff'] });
+        if (finalScore >= 70) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#FFD700', '#FF8C00', '#ffffff'] });
         this.switchScreen('game', 'results');
         document.getElementById('final-score-val').innerText = finalScore;
         if (currentUser) {
-            try {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', currentUser.uid), {
-                    name: this.state.playerName, score: finalScore, timestamp: Date.now()
-                });
-            } catch (e) { console.error("Score Save Error:", e); }
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', currentUser.uid), {
+                name: this.state.playerName, score: finalScore, timestamp: Date.now()
+            });
         }
     },
 
@@ -188,17 +159,15 @@ const GameEngine = {
         this.switchScreen(from, 'leaderboard');
         const list = document.getElementById('leaderboard-list');
         list.innerHTML = '<p class="text-center text-gray-500">טוען...</p>';
-        try {
-            const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard'));
-            const scores = []; snap.forEach(d => scores.push(d.data()));
-            scores.sort((a,b) => b.score - a.score);
-            list.innerHTML = scores.slice(0, 10).map((s, i) => `
-                <div class="flex justify-between p-4 rounded-xl bg-white/5 mb-2">
-                    <span class="text-white">${['🥇','🥈','🥉'][i] || i+1+'.'} ${s.name}</span>
-                    <span class="text-yellow-500 font-bold">${s.score}</span>
-                </div>
-            `).join('');
-        } catch (e) { list.innerHTML = "שגיאה בטעינת לוח הישגים"; }
+        const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard'));
+        const scores = []; snap.forEach(d => scores.push(d.data()));
+        scores.sort((a,b) => b.score - a.score);
+        list.innerHTML = scores.slice(0, 10).map((s, i) => `
+            <div class="flex justify-between p-4 rounded-xl bg-white/5 mb-2">
+                <span class="text-white">${['🥇','🥈','🥉'][i] || i+1+'.'} ${s.name}</span>
+                <span class="text-yellow-500 font-bold">${s.score}</span>
+            </div>
+        `).join('');
     },
 
     async openTeacherArea() {
@@ -209,25 +178,17 @@ const GameEngine = {
     async loadTeacherResults() {
         const list = document.getElementById('teacher-results-list');
         list.innerHTML = '<tr><td colspan="4" class="text-center p-4">טוען...</td></tr>';
-        try {
-            const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard'));
-            const results = []; snap.forEach(d => results.push({ ...d.data(), id: d.id }));
-            results.sort((a,b) => b.timestamp - a.timestamp);
-            list.innerHTML = results.map(r => `
-                <tr class="border-b border-white/5"><td class="px-4 py-2">${r.name}</td><td class="px-4 py-2 text-yellow-500 font-bold">${r.score}</td>
-                <td class="px-4 py-2 text-xs text-gray-500">${new Date(r.timestamp).toLocaleDateString('he-IL')}</td>
-                <td class="px-4 py-2"><button onclick="GameEngine.deleteResult('${r.id}')" class="text-red-500">מחק</button></td></tr>
-            `).join('');
-        } catch (e) { list.innerHTML = "שגיאה"; }
+        const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard'));
+        const results = []; snap.forEach(d => results.push({ ...d.data(), id: d.id }));
+        results.sort((a,b) => b.timestamp - a.timestamp);
+        list.innerHTML = results.map(r => `
+            <tr class="border-b border-white/5"><td class="px-4 py-2">${r.name}</td><td class="px-4 py-2 text-yellow-500 font-bold">${r.score}</td>
+            <td class="px-4 py-2 text-xs text-gray-500">${new Date(r.timestamp).toLocaleDateString('he-IL')}</td>
+            <td class="px-4 py-2"><button onclick="GameEngine.deleteResult('${r.id}')" class="text-red-500">מחק</button></td></tr>
+        `).join('');
     },
 
     async deleteResult(id) { if(confirm("למחוק?")) { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', id)); this.loadTeacherResults(); } },
-    switchScreen(outId, inId) { 
-        const outScreen = document.getElementById(`screen-${outId}`);
-        const inScreen = document.getElementById(`screen-${inId}`);
-        if (outScreen) outScreen.classList.add('hidden'); 
-        if (inScreen) inScreen.classList.remove('hidden'); 
-    }
+    switchScreen(outId, inId) { document.getElementById(`screen-${outId}`).classList.add('hidden'); document.getElementById(`screen-${inId}`).classList.remove('hidden'); }
 };
-
 window.GameEngine = GameEngine;
