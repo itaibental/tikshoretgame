@@ -10,21 +10,17 @@ signInAnonymously(auth);
 
 const GameEngine = {
     state: {
-        playerName: "", schoolName: "", difficulty: 1, roundsPlayed: 0,
-        currentQuestions: [], currentIndex: 0, score: 0, timerInterval: null, selectedArenas: []
+        playerName: "", schoolName: "", gameMode: null, difficulty: "easy",
+        roundsPlayed: 0, currentQuestions: [], currentIndex: 0, score: 0,
+        timerInterval: null, selectedArenas: []
     },
 
     arenaDisplayNames: {
-        "זירה 1": "זירה 1 – להבין ולפרש את המציאות",
-        "זירה 2": "זירה 2 – גלובליזציה",
-        "זירה 3": "זירה 3 – חדשות וצילום עיתונאי",
-        "זירה 4": "זירה 4 – הומור וסאטירה",
-        "זירה 5": "זירה 5 – תרבות דיגיטלית",
-        "זירה 6": "זירה 6 – תוכניות ריאליטי",
-        "זירה 7": "זירה 7 – קליפים",
-        "זירה 8": "זירה 8 – תקשורת וספורט",
-        "זירה 9": "זירה 9 – פרסומות",
-        "זירת העל": "זירת העל"
+        "זירה 1": "זירה 1 – להבין ולפרש את המציאות", "זירה 2": "זירה 2 – גלובליזציה",
+        "זירה 3": "זירה 3 – חדשות וצילום עיתונאי", "זירה 4": "זירה 4 – הומור וסאטירה",
+        "זירה 5": "זירה 5 – תרבות דיגיטלית", "זירה 6": "זירה 6 – תוכניות ריאליטי",
+        "זירה 7": "זירה 7 – קליפים", "זירה 8": "זירה 8 – תקשורת וספורט",
+        "זירה 9": "זירה 9 – פרסומות", "זירת העל": "זירת העל"
     },
 
     arenaConfig: {
@@ -34,13 +30,46 @@ const GameEngine = {
         "זירת העל": "arena-color-AL"
     },
 
+    setGameMode(mode) {
+        this.state.gameMode = mode;
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active-mode'));
+        event.currentTarget.classList.add('active-mode');
+        
+        const btn = document.getElementById('main-action-btn');
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        
+        if (mode === 'levels') {
+            document.getElementById('difficulty-selector').classList.remove('hidden');
+            btn.innerText = "התחל משחק!";
+        } else {
+            document.getElementById('difficulty-selector').classList.add('hidden');
+            btn.innerText = "בחר זירות ומושגים";
+        }
+        if (window.Sounds) Sounds.click();
+    },
+
     setDifficulty(val) {
         this.state.difficulty = val;
         document.querySelectorAll('.diff-btn').forEach(btn => {
             btn.classList.remove('active-diff');
-            if(parseInt(btn.dataset.val) === val) btn.classList.add('active-diff');
+            if(btn.dataset.val === val) btn.classList.add('active-diff');
         });
+        const map = { 'easy': 5, 'medium': 12, 'hard': 25, 'v-hard': 45 };
+        document.getElementById('difficulty-desc').innerText = `רמת קושי: ${map[val]} שאלות רנדומליות`;
         if (window.Sounds) Sounds.click();
+    },
+
+    handleMainAction() {
+        this.state.playerName = document.getElementById('input-username').value.trim();
+        this.state.schoolName = document.getElementById('input-school').value.trim();
+        if(!this.state.playerName || !this.state.schoolName) { alert("נא להזין שם ובית ספר"); return; }
+        
+        if (this.state.gameMode === 'manual') {
+            this.goToSelection();
+        } else {
+            this.initCountdown();
+        }
     },
 
     getDatabase() {
@@ -51,45 +80,47 @@ const GameEngine = {
     },
 
     goToSelection() {
-        this.state.playerName = document.getElementById('input-username').value.trim();
-        this.state.schoolName = document.getElementById('input-school').value.trim();
-        if(!this.state.playerName || !this.state.schoolName) { alert("נא להזין שם ובית ספר"); return; }
         if (window.Sounds) Sounds.click();
-        const arenas = [...new Set(this.getDatabase().map(d => d.zira))].sort((a,b) => a.localeCompare(b, 'he', {numeric:true}));
+        const arenas = [...new Set(this.getDatabase().map(d => d.zira))].sort();
         document.getElementById('arena-list').innerHTML = arenas.map(a => `
-            <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-pointer">
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
                 <input type="checkbox" id="arena-${a}" value="${a}" class="w-5 h-5 accent-blue-500">
-                <label for="arena-${a}" class="flex-grow cursor-pointer text-sm font-medium text-white">${this.arenaDisplayNames[a] || a}</label>
+                <label for="arena-${a}" class="flex-grow cursor-pointer text-sm text-white">${this.arenaDisplayNames[a] || a}</label>
             </div>`).join('');
         this.switchScreen('welcome', 'selection');
     },
 
     goToConceptSelection() {
         const checked = Array.from(document.querySelectorAll('#arena-list input:checked')).map(i => i.value);
-        if(checked.length === 0) { alert("נא לבחור לפחות זירה אחת"); return; }
+        if(checked.length === 0) { alert("בחר לפחות זירה אחת"); return; }
         this.state.selectedArenas = checked;
         if (window.Sounds) Sounds.click();
+        
         const pool = this.getDatabase().filter(q => checked.includes(q.zira));
         const conceptsMap = {};
         pool.forEach(q => { const cName = q.concept || "כללי"; if(!conceptsMap[cName]) conceptsMap[cName] = q.zira; });
+        
         document.getElementById('concept-list').innerHTML = Object.keys(conceptsMap).sort().map(cName => `
-            <div class="flex items-center gap-3 p-3 rounded-xl ${this.arenaConfig[conceptsMap[cName]] || ''} transition-all">
-                <input type="checkbox" id="concept-${cName}" value="${cName}" class="w-4 h-4 accent-white" checked>
+            <div class="flex items-center gap-2 p-2 rounded-lg ${this.arenaConfig[conceptsMap[cName]] || ''}">
+                <input type="checkbox" id="concept-${cName}" value="${cName}" class="w-4 h-4" checked>
                 <label for="concept-${cName}" class="flex-grow cursor-pointer text-xs font-bold text-white">${cName}</label>
             </div>`).join('');
+
         document.getElementById('step-1-arenas').classList.add('hidden');
         document.getElementById('step-2-concepts').classList.remove('hidden');
     },
 
     initCountdown() {
         if (window.Sounds) Sounds.click();
-        this.switchScreen('selection', 'none');
+        const fromScreen = this.state.gameMode === 'levels' ? 'welcome' : 'selection';
+        this.switchScreen(fromScreen, 'none');
+        
         const overlay = document.getElementById('countdown-overlay');
         const text = document.getElementById('countdown-text');
         overlay.classList.remove('hidden');
         
         let count = 3;
-        const messages = ["3", "2", "1", "נצא לדרך!"];
+        const messages = ["3", "2", "1", "צא!"];
         text.innerText = messages[0];
         
         const itv = setInterval(() => {
@@ -105,14 +136,23 @@ const GameEngine = {
     },
 
     startGame() {
-        const checkedConcepts = Array.from(document.querySelectorAll('#concept-list input:checked')).map(i => i.value);
-        const difficultyMap = { 1: 5, 2: 10, 3: 15, 4: 25, 5: 40 };
-        const limitCount = difficultyMap[this.state.difficulty];
-        const pool = this.getDatabase().filter(q => this.state.selectedArenas.includes(q.zira) && checkedConcepts.includes(q.concept || "כללי"));
-        
+        const db = this.getDatabase();
+        let pool = [];
+        let limitCount = 10;
+
+        if (this.state.gameMode === 'levels') {
+            pool = db;
+            const map = { 'easy': 5, 'medium': 12, 'hard': 25, 'v-hard': 45 };
+            limitCount = map[this.state.difficulty];
+        } else {
+            const checkedConcepts = Array.from(document.querySelectorAll('#concept-list input:checked')).map(i => i.value);
+            pool = db.filter(q => this.state.selectedArenas.includes(q.zira) && checkedConcepts.includes(q.concept || "כללי"));
+            limitCount = pool.length;
+        }
+
         this.state.currentQuestions = pool.sort(() => Math.random() - 0.5).slice(0, limitCount);
         this.state.currentIndex = 0; this.state.score = 0; this.state.roundsPlayed++;
-        
+
         document.getElementById('display-player').innerText = this.state.playerName;
         document.getElementById('display-school').innerText = this.state.schoolName;
         this.switchScreen('none', 'game');
@@ -122,11 +162,13 @@ const GameEngine = {
     renderQuestion() {
         const q = this.state.currentQuestions[this.state.currentIndex];
         document.getElementById('feedback-area').classList.add('hidden');
-        document.getElementById('display-arena').innerText = `${this.arenaDisplayNames[q.zira] || q.zira} | ${q.concept || ''}`;
+        document.getElementById('display-arena').innerText = `${q.zira} | ${q.concept || ''}`;
         document.getElementById('display-question').innerText = q.q;
+        
+        // ערבוב רנדומלי של התשובות
         const shuffled = q.a.map((ans, i) => ({ ans, i })).sort(() => Math.random() - 0.5);
         document.getElementById('options-container').innerHTML = shuffled.map(item => `
-            <button onclick="window.GameEngine.handleAnswer(${item.i})" class="option-btn text-white p-4 rounded-2xl w-full font-medium">
+            <button onclick="window.GameEngine.handleAnswer(${item.i})" class="option-btn text-white text-right p-4 rounded-xl w-full font-medium">
                 ${item.ans}
             </button>`).join('');
         this.startTimer();
@@ -137,7 +179,8 @@ const GameEngine = {
         let timeLeft = 60;
         document.getElementById('display-timer').innerText = `60s`;
         this.state.timerInterval = setInterval(() => {
-            timeLeft--; document.getElementById('display-timer').innerText = `${timeLeft}s`;
+            timeLeft--;
+            document.getElementById('display-timer').innerText = `${timeLeft}s`;
             if (timeLeft <= 0) { clearInterval(this.state.timerInterval); this.handleAnswer(-1); }
         }, 1000);
     },
@@ -147,7 +190,7 @@ const GameEngine = {
         const q = this.state.currentQuestions[this.state.currentIndex];
         const buttons = document.querySelectorAll('.option-btn');
         const pointsPerQ = 100 / this.state.currentQuestions.length;
-        
+
         buttons.forEach(b => {
             b.disabled = true;
             const bIdx = parseInt(b.getAttribute('onclick').match(/-?\d+/)[0]);
@@ -157,9 +200,11 @@ const GameEngine = {
 
         if(idx === q.correct) { 
             this.state.score += pointsPerQ; 
-            if(window.Sounds) Sounds.correct();
+            if (window.Sounds) Sounds.correct();
             confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
-        } else { if(window.Sounds) Sounds.wrong(); }
+        } else {
+            if (window.Sounds) Sounds.wrong();
+        }
 
         document.getElementById('display-score').innerText = Math.round(this.state.score);
         document.getElementById('feedback-text').innerHTML = `<strong>הסבר:</strong> ${q.rationale}`;
@@ -173,18 +218,21 @@ const GameEngine = {
     },
 
     async finishGame() {
-        if(window.Sounds) Sounds.gameOver();
+        if (window.Sounds) Sounds.gameOver();
         const final = Math.round(this.state.score);
         this.switchScreen('game', 'results');
+        
         document.getElementById('final-score-val').innerText = final;
         document.getElementById('res-name').innerText = this.state.playerName;
         document.getElementById('res-school').innerText = this.state.schoolName;
-        document.getElementById('res-difficulty').innerText = this.state.difficulty;
+        document.getElementById('res-diff').innerText = this.state.gameMode === 'levels' ? this.state.difficulty : "בחירה ידנית";
         document.getElementById('res-rounds').innerText = this.state.roundsPlayed;
+
         try {
             await setDoc(doc(db, "results", `${Date.now()}-${this.state.playerName}`), {
-                name: this.state.playerName, school: this.state.schoolName, score: final, 
-                difficulty: this.state.difficulty, rounds: this.state.roundsPlayed, timestamp: new Date()
+                name: this.state.playerName, school: this.state.schoolName, 
+                score: final, difficulty: this.state.difficulty, mode: this.state.gameMode,
+                rounds: this.state.roundsPlayed, timestamp: new Date()
             });
         } catch(e) { console.error(e); }
     },
@@ -192,46 +240,42 @@ const GameEngine = {
     async showLeaderboard() {
         if (window.Sounds) Sounds.click();
         this.switchScreen('welcome', 'data-view');
-        document.getElementById('data-title').innerText = "🏆 לוח תוצאות (טופ 20)";
-        document.getElementById('data-content').innerHTML = "<p class='text-center py-10'>טוען נתונים...</p>";
-        const q = query(collection(db, "results"), orderBy("score", "desc"), limit(20));
-        const snap = await getDocs(q);
-        let html = `<table class="w-full text-sm text-right"><tr><th class="p-2">שם</th><th class="p-2 text-center">ניקוד</th><th class="p-2">בי"ס</th></tr>`;
-        snap.forEach(doc => {
-            const d = doc.data();
-            html += `<tr class="border-b border-white/5"><td class="p-2">${d.name}</td><td class="p-2 text-center font-bold text-green-400">${d.score}</td><td class="p-2 text-xs text-gray-400">${d.school}</td></tr>`;
+        document.getElementById('data-title').innerText = "🏆 לוח תוצאות (טופ 10)";
+        document.getElementById('data-content').innerHTML = "טוען...";
+        const qSnap = await getDocs(query(collection(db, "results"), orderBy("score", "desc"), limit(10)));
+        let h = `<table class="w-full text-sm text-right"><tr><th>שם</th><th>ציון</th><th>בי"ס</th></tr>`;
+        qSnap.forEach(d => {
+            const data = d.data();
+            h += `<tr class="border-b border-white/5"><td>${data.name}</td><td class="text-green-400 font-bold">${data.score}</td><td>${data.school}</td></tr>`;
         });
-        document.getElementById('data-content').innerHTML = html + "</table>";
+        document.getElementById('data-content').innerHTML = h + `</table>`;
     },
 
     showAdmin() {
         if (window.Sounds) Sounds.click();
-        const pass = prompt("נא להזין קוד מורה:");
-        if(pass === "1234") this.showFullData();
-        else alert("קוד שגוי");
+        const p = prompt("קוד מורה:");
+        if (p === "1234") this.showFullData();
     },
 
     async showFullData() {
         this.switchScreen('welcome', 'data-view');
-        document.getElementById('data-title').innerText = "📊 דו\"ח ציונים מלא";
-        document.getElementById('data-content').innerHTML = "טוען...";
-        const snap = await getDocs(query(collection(db, "results"), orderBy("timestamp", "desc")));
-        let html = `<table class="w-full text-xs text-right"><tr><th class="p-1">שם</th><th class="p-1">ציון</th><th class="p-1">רמה</th><th class="p-1 text-left">תאריך</th></tr>`;
-        snap.forEach(doc => {
-            const d = doc.data();
-            const date = d.timestamp?.toDate().toLocaleDateString('he-IL') || "";
-            html += `<tr class="border-b border-white/5"><td class="p-1 font-bold">${d.name}</td><td class="p-1">${d.score}</td><td class="p-1">${d.difficulty}</td><td class="p-1 text-[10px] text-gray-500 text-left">${date}</td></tr>`;
+        document.getElementById('data-title').innerText = "📊 ניהול: דו\"ח מלא";
+        const qSnap = await getDocs(query(collection(db, "results"), orderBy("timestamp", "desc")));
+        let h = `<table class="w-full text-[10px] text-right"><tr><th>תאריך</th><th>שם</th><th>בי"ס</th><th>ציון</th></tr>`;
+        qSnap.forEach(d => {
+            const data = d.data();
+            const date = data.timestamp?.toDate().toLocaleDateString('he-IL') || "";
+            h += `<tr class="border-b border-white/5"><td>${date}</td><td>${data.name}</td><td>${data.school}</td><td class="font-bold">${data.score}</td></tr>`;
         });
-        document.getElementById('data-content').innerHTML = html + "</table>";
+        document.getElementById('data-content').innerHTML = h + `</table>`;
     },
 
     switchScreen(out, inId) {
         if(out !== 'none') document.getElementById(`screen-${out}`).classList.add('hidden');
         if(inId !== 'none') document.getElementById(`screen-${inId}`).classList.remove('hidden');
     },
-
+    
     backToArenas() {
-        if (window.Sounds) Sounds.click();
         document.getElementById('step-2-concepts').classList.add('hidden');
         document.getElementById('step-1-arenas').classList.remove('hidden');
     }
