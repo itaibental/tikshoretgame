@@ -44,12 +44,12 @@ const GameEngine = {
     if (window.Sounds) Sounds.click();
     this.state.playerName = name;
     const arenas = [...new Set(this.getDatabase().map(d => d.zira))].sort((a,b) => a.localeCompare(b, 'he', {numeric:true}));
-    document.getElementById('arena-list').innerHTML = arenas.map(a => `
-        <div class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
-            <input type="checkbox" id="arena-${a}" value="${a}" class="w-4 h-4 accent-yellow-500">
-            <label for="arena-${a}" class="flex-grow text-sm text-gray-200 cursor-pointer">${this.arenaDisplayNames[a] || a}</label>
-        </div>
-    `).join('');
+   document.getElementById('arena-list').innerHTML = arenas.map(a => `
+    <div class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+        <input type="checkbox" id="arena-${a}" value="${a}" class="w-4 h-4 accent-yellow-500">
+        <label for="arena-${a}" class="flex-grow text-sm text-gray-200 cursor-pointer">${this.arenaDisplayNames[a] || a}</label>
+    </div>
+`).join('');
     this.switchScreen('welcome', 'selection');
 },
     
@@ -192,5 +192,6 @@ const GameEngine = {
     switchScreen(outId, inId) { document.getElementById(`screen-${outId}`).classList.add('hidden'); document.getElementById(`screen-${inId}`).classList.remove('hidden'); }
 };
 window.GameEngine = GameEngine;
+
 
 
