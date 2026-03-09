@@ -1,4 +1,3 @@
-להלן הקוד המלא והמתוקן עבור הקובץ `zirotgame/js/engine.js`, הכולל את השינוי כך שתיבות הסימון של הזירות יהיו ריקות כברירת מחדל:
 
 ```javascript
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
