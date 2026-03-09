@@ -1,3 +1,6 @@
+להלן הקוד המלא והמתוקן עבור הקובץ `zirotgame/js/engine.js`, הכולל את השינוי כך שתיבות הסימון של הזירות יהיו ריקות כברירת מחדל:
+
+```javascript
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -37,24 +40,22 @@ const GameEngine = {
         if (window.DATA_ZIRA_AL) dbList.push(...window.DATA_ZIRA_AL);
         return dbList;
     },
-goToSelection() {
-    const name = document.getElementById('input-username').value.trim();
-    if(!name) { alert("נא להזין שם"); return; }
-    if (window.Sounds) Sounds.click();
-    this.state.playerName = name;
-    
-    const arenas = [...new Set(this.getDatabase().map(d => d.zira))].sort((a,b) => a.localeCompare(b, 'he', {numeric:true}));
-    
-    // כאן הוסר ה-checked כדי שהתיבות יהיו ריקות כברירת מחדל
-    document.getElementById('arena-list').innerHTML = arenas.map(a => `
-        <div class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
-            <input type="checkbox" id="arena-${a}" value="${a}" class="w-4 h-4 accent-yellow-500">
-            <label for="arena-${a}" class="flex-grow text-sm text-gray-200 cursor-pointer">${this.arenaDisplayNames[a] || a}</label>
-        </div>
-    `).join('');
-    
-    this.switchScreen('welcome', 'selection');
-},
+
+    goToSelection() {
+        const name = document.getElementById('input-username').value.trim();
+        if(!name) { alert("נא להזין שם"); return; }
+        if (window.Sounds) Sounds.click();
+        this.state.playerName = name;
+        const arenas = [...new Set(this.getDatabase().map(d => d.zira))].sort((a,b) => a.localeCompare(b, 'he', {numeric:true}));
+        document.getElementById('arena-list').innerHTML = arenas.map(a => `
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+                <input type="checkbox" id="arena-${a}" value="${a}" class="w-4 h-4 accent-yellow-500">
+                <label for="arena-${a}" class="flex-grow text-sm text-gray-200 cursor-pointer">${this.arenaDisplayNames[a] || a}</label>
+            </div>
+        `).join('');
+        this.switchScreen('welcome', 'selection');
+    },
+
     selectAll(val) { if(window.Sounds) Sounds.click(); document.querySelectorAll('#arena-list input').forEach(i => i.checked = val); },
 
     startGame() {
@@ -195,3 +196,4 @@ goToSelection() {
 };
 window.GameEngine = GameEngine;
 
+```
