@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuizComm | תרגול תקשורת וחברה</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 bg-[#121212]">
+    <div id="app-container" class="w-full max-w-2xl flex flex-col gap-6">
+        
+        <div id="screen-welcome" class="card p-8 text-center animate-pop">
+            <h1 class="text-5xl font-black mb-2 gradient-text">QuizComm</h1>
+            <p class="text-gray-400 mb-8 font-light">משחק מושגי תקשורת וחברה</p>
+            <input type="text" id="input-username" placeholder="איך קוראים לך?" 
+                   class="w-full bg-black/40 border-2 border-white/10 p-4 rounded-xl text-center text-xl focus:border-yellow-500 outline-none transition-all text-white mb-6">
+            <div class="flex flex-col gap-3">
+                <button onclick="GameEngine.goToSelection()" class="btn-primary w-full py-4 rounded-2xl text-xl">התחל תרגול</button>
+                <div class="flex justify-between items-center px-1">
+                    <button onclick="GameEngine.showLeaderboard('welcome')" class="text-gray-400 hover:text-white transition-colors text-xs font-medium">🏆 לוח הישגים</button>
+                    <button onclick="GameEngine.openTeacherArea()" class="text-yellow-500/50 hover:text-yellow-500 transition-colors text-xs font-medium">🔒 כניסת מורה</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-selection" class="hidden card p-8 animate-pop">
+            <h2 class="text-3xl font-bold mb-6 text-center text-white">הגדרות משחק</h2>
+            <div class="mb-6 bg-white/5 p-4 rounded-xl border border-white/10">
+                <label class="text-gray-400 text-sm block mb-2">מספר שאלות:</label>
+                <input type="number" id="input-question-count" value="10" min="1" max="50" 
+                       class="w-full bg-black/40 border-2 border-white/10 p-3 rounded-xl text-center text-xl text-white outline-none">
+            </div>
+            <div id="arena-list" class="grid grid-cols-1 gap-3 mb-6 max-h-60 overflow-y-auto pr-2"></div>
+            <div class="flex flex-col gap-3">
+                <button onclick="GameEngine.startGame()" class="btn-primary w-full py-4 rounded-2xl text-xl">יאללה למשחק!</button>
+                <button onclick="GameEngine.selectAll(true)" class="text-gray-500 text-xs hover:text-white">בחר הכל</button>
+            </div>
+        </div>
+
+        <div id="screen-game" class="hidden flex flex-col gap-4 animate-pop">
+            <div class="flex justify-between items-center px-2 text-sm text-white">
+                <span id="display-player" class="text-yellow-500 font-bold"></span>
+                <div class="flex gap-4 items-center">
+                    <span id="display-timer" class="text-red-500 font-bold bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">60s</span>
+                    <span id="display-score" class="text-orange-500 font-bold">ניקוד: 0</span>
+                </div>
+            </div>
+            <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                <div id="progress-bar" class="progress-bar-fill h-full w-0"></div>
+            </div>
+            <div class="card p-8">
+                <div id="display-arena" class="text-xs uppercase tracking-widest text-gray-500 mb-2 font-bold">זירה</div>
+                <h3 id="display-question" class="text-2xl font-bold mb-8 leading-tight text-white"></h3>
+                <div id="options-container" class="grid gap-3"></div>
+            </div>
+            <div id="feedback-area" class="hidden card p-4 border-l-4 border-yellow-500 animate-pop">
+                <p id="feedback-text" class="text-sm italic text-gray-300"></p>
+                <button id="next-btn" class="mt-4 btn-primary px-6 py-2 rounded-lg text-sm">המשך</button>
+            </div>
+        </div>
+
+        <div id="screen-results" class="hidden card p-8 text-center animate-pop">
+            <h2 class="text-4xl font-black mb-4 gradient-text">כל הכבוד!</h2>
+            <div class="text-6xl font-black mb-4 text-white" id="final-score-val">0</div>
+            <button onclick="GameEngine.showLeaderboard('results')" class="btn-primary w-full py-4 rounded-2xl text-xl mb-3">צפה בלוח הישגים</button>
+            <button onclick="location.reload()" class="text-gray-500 hover:text-white transition-colors underline text-sm">נסה שוב</button>
+        </div>
+
+        <div id="screen-leaderboard" class="hidden card p-8 animate-pop">
+            <h2 class="text-3xl font-bold mb-6 text-center gradient-text">לוח הישגים (טופ 10)</h2>
+            <div id="leaderboard-list" class="flex flex-col gap-2 mb-8 max-h-64 overflow-y-auto"></div>
+            <button onclick="GameEngine.switchScreen('leaderboard', 'welcome')" class="btn-primary w-full py-3 rounded-xl">חזור</button>
+        </div>
+
+        <div id="screen-teacher" class="hidden card p-8 animate-pop">
+            <h2 class="text-3xl font-bold mb-6 text-center text-yellow-500">ניהול תוצאות</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-right text-sm text-gray-300">
+                    <thead class="text-xs uppercase bg-white/5 text-gray-400">
+                        <tr><th class="px-4 py-2">שם</th><th class="px-4 py-2">ציון</th><th class="px-4 py-2">תאריך</th><th class="px-4 py-2">פעולות</th></tr>
+                    </thead>
+                    <tbody id="teacher-results-list"></tbody>
+                </table>
+            </div>
+            <button onclick="GameEngine.switchScreen('teacher', 'welcome')" class="mt-8 btn-primary w-full py-3 rounded-xl">חזור</button>
+        </div>
+    </div>
+
+    <script src="js/data/zira1.js"></script><script src="js/data/zira2.js"></script><script src="js/data/zira3.js"></script>
+    <script src="js/data/zira4.js"></script><script src="js/data/zira5.js"></script><script src="js/data/zira6.js"></script>
+    <script src="js/data/zira7.js"></script><script src="js/data/zira8.js"></script><script src="js/data/zira9.js"></script>
+    <script src="js/data/ziraAl.js"></script>
+    <script src="js/audio.js"></script>
+    <script type="module" src="js/engine.js"></script>
+</body>
+</html>
