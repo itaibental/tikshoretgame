@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuizComm | תרגול תקשורת וחברה</title>
+    <title>QuizComm | תרגול מושגי תקשורת</title>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/styles.css">
@@ -14,7 +14,7 @@
         
         <div id="screen-welcome" class="card p-8 text-center animate-pop">
             <h1 class="text-5xl font-black mb-2 gradient-text">QuizComm</h1>
-            <p class="text-gray-400 mb-8 font-light">משחק מושגי תקשורת וחברה</p>
+            <p class="text-gray-400 mb-8 font-light">תרגול מושגי יסוד בתקשורת וחברה</p>
             <input type="text" id="input-username" placeholder="איך קוראים לך?" 
                    class="w-full bg-black/40 border-2 border-white/10 p-4 rounded-xl text-center text-xl focus:border-yellow-500 outline-none transition-all text-white mb-6">
             <div class="flex flex-col gap-3">
@@ -28,15 +28,28 @@
 
         <div id="screen-selection" class="hidden card p-8 animate-pop">
             <h2 class="text-3xl font-bold mb-6 text-center text-white">הגדרות משחק</h2>
-            <div class="mb-6 bg-white/5 p-4 rounded-xl border border-white/10">
-                <label class="text-gray-400 text-sm block mb-2">מספר שאלות:</label>
-                <input type="number" id="input-question-count" value="10" min="1" max="50" 
-                       class="w-full bg-black/40 border-2 border-white/10 p-3 rounded-xl text-center text-xl text-white outline-none">
+            
+            <div id="step-1-arenas">
+                <p class="text-yellow-500 mb-4 font-bold">שלב 1: בחר זירות לתרגול</p>
+                <div id="arena-list" class="grid grid-cols-1 gap-3 mb-6 max-h-60 overflow-y-auto pr-2"></div>
+                <div class="flex flex-col gap-3">
+                    <button onclick="GameEngine.goToConceptSelection()" class="btn-primary w-full py-4 rounded-2xl text-xl">המשך לבחירת מושגים</button>
+                    <button onclick="GameEngine.selectAllArenas(true)" class="text-gray-500 text-xs hover:text-white">בחר את כל הזירות</button>
+                </div>
             </div>
-            <div id="arena-list" class="grid grid-cols-1 gap-3 mb-6 max-h-60 overflow-y-auto pr-2"></div>
-            <div class="flex flex-col gap-3">
-                <button onclick="GameEngine.startGame()" class="btn-primary w-full py-4 rounded-2xl text-xl">יאללה למשחק!</button>
-                <button onclick="GameEngine.selectAll(true)" class="text-gray-500 text-xs hover:text-white">בחר הכל</button>
+
+            <div id="step-2-concepts" class="hidden">
+                <p class="text-cyan-400 mb-4 font-bold">שלב 2: בחר מושגים ספציפיים</p>
+                <div class="mb-4 bg-white/5 p-4 rounded-xl border border-white/10">
+                    <label class="text-gray-400 text-sm block mb-2">מספר שאלות מרבי:</label>
+                    <input type="number" id="input-question-count" value="10" min="1" max="50" 
+                           class="w-full bg-black/40 border-2 border-white/10 p-3 rounded-xl text-center text-xl text-white outline-none">
+                </div>
+                <div id="concept-list" class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6 max-h-60 overflow-y-auto pr-2 text-right"></div>
+                <div class="flex flex-col gap-3">
+                    <button onclick="GameEngine.startGame()" class="btn-primary w-full py-4 rounded-2xl text-xl">יאללה למשחק!</button>
+                    <button onclick="GameEngine.backToArenas()" class="text-gray-500 text-xs hover:text-white">חזור לבחירת זירות</button>
+                </div>
             </div>
         </div>
 
