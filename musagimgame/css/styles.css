@@ -7,66 +7,126 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    /* רקע קוביות אפורות בתלת מימד באמצעות CSS Pattern */
-    background-color: #d1d1d1;
-    background-image: 
-        linear-gradient(30deg, #bcbcbc 12%, transparent 12.5%, transparent 87%, #bcbcbc 87.5%, #bcbcbc),
-        linear-gradient(150deg, #bcbcbc 12%, transparent 12.5%, transparent 87%, #bcbcbc 87.5%, #bcbcbc),
-        linear-gradient(30deg, #bcbcbc 12%, transparent 12.5%, transparent 87%, #bcbcbc 87.5%, #bcbcbc),
-        linear-gradient(150deg, #bcbcbc 12%, transparent 12.5%, transparent 87%, #bcbcbc 87.5%, #bcbcbc),
-        linear-gradient(60deg, #999999 25%, transparent 25.5%, transparent 75%, #999999 75.5%, #999999), 
-        linear-gradient(60deg, #999999 25%, transparent 25.5%, transparent 75%, #999999 75.5%, #999999);
-    background-size: 80px 140px;
-    background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px;
+    background: #000; /* רקע שחור עמוק */
+    overflow-x: hidden;
+    position: relative;
 }
 
-/* חלון המשחק - כחול כהה עם אפקט זכוכית */
+/* --- כוכבים נופלים --- */
+.stars-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+}
+
+.shooting-star {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    height: 2px;
+    background: linear-gradient(-45deg, #ffffff, rgba(0, 0, 255, 0));
+    border-radius: 999px;
+    filter: drop-shadow(0 0 6px #ffffff);
+    animation: tail 3s ease-in-out infinite, shooting 3s ease-in-out infinite;
+}
+
+@keyframes tail {
+    0% { width: 0; }
+    30% { width: 100px; }
+    100% { width: 0; }
+}
+
+@keyframes shooting {
+    0% { transform: translateX(0) translateY(0) rotate(45deg); }
+    100% { transform: translateX(-1200px) translateY(1200px) rotate(45deg); }
+}
+
+.shooting-star:nth-child(1) { top: 10%; right: 10%; animation-delay: 0s; }
+.shooting-star:nth-child(2) { top: 0; right: 40%; animation-delay: 1.2s; }
+.shooting-star:nth-child(3) { top: 20%; right: 70%; animation-delay: 2.5s; }
+.shooting-star:nth-child(4) { top: 50%; right: 20%; animation-delay: 0.8s; }
+.shooting-star:nth-child(5) { top: 40%; right: 50%; animation-delay: 2s; }
+.shooting-star:nth-child(6) { top: 60%; right: 80%; animation-delay: 1.5s; }
+.shooting-star:nth-child(7) { top: 5%; right: 90%; animation-delay: 3s; }
+
+/* --- חלון המשחק (אפקט זכוכית כחול) --- */
 .card {
-    background: rgba(15, 23, 42, 0.85); /* כחול כהה עמוק */
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    background: rgba(15, 23, 42, 0.7); /* כחול כהה שקוף */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 2rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border-radius: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9);
     color: white;
+    position: relative;
+    z-index: 10;
 }
 
+/* --- כפתורים ופקדים --- */
 .btn-primary {
     background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     color: white;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(29, 78, 216, 0.3);
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(29, 78, 216, 0.5);
-    filter: brightness(1.1);
-}
-
-.option-btn {
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(29, 78, 216, 0.4);
     border: 1px solid rgba(255,255,255,0.1);
 }
 
-.option-btn:hover:not(:disabled) {
-    background: rgba(255,255,255,0.1);
-    border-color: rgba(255,255,255,0.3);
+.btn-primary:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(29, 78, 216, 0.6);
+    filter: brightness(1.2);
 }
 
-.correct { background: #059669 !important; border-color: #10b981 !important; }
+.diff-btn {
+    background: rgba(255,255,255,0.05);
+    color: #94a3b8;
+}
+
+.diff-btn.active-diff {
+    background: #3b82f6 !important;
+    color: white !important;
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+}
+
+.option-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.2s ease;
+}
+
+.option-btn:hover:not(:disabled) {
+    background: rgba(255,255,255,0.15);
+    transform: scale(1.01);
+}
+
+.correct { background: #059669 !important; border-color: #10b981 !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
 .wrong { background: #dc2626 !important; border-color: #ef4444 !important; }
 
-/* הגדרות צבעים לזירות השונות */
-.arena-color-1 { border-right: 6px solid #ef4444; background: rgba(239, 68, 68, 0.1); } /* אדום */
-.arena-color-2 { border-right: 6px solid #3b82f6; background: rgba(59, 130, 246, 0.1); } /* כחול */
-.arena-color-3 { border-right: 6px solid #10b981; background: rgba(16, 185, 129, 0.1); } /* ירוק */
-.arena-color-4 { border-right: 6px solid #f59e0b; background: rgba(245, 158, 11, 0.1); } /* צהוב */
-.arena-color-5 { border-right: 6px solid #8b5cf6; background: rgba(139, 92, 246, 0.1); } /* סגול */
-.arena-color-6 { border-right: 6px solid #ec4899; background: rgba(236, 72, 153, 0.1); } /* ורוד */
-.arena-color-7 { border-right: 6px solid #06b6d4; background: rgba(6, 182, 212, 0.1); } /* תכלת */
-.arena-color-8 { border-right: 6px solid #f97316; background: rgba(249, 115, 22, 0.1); } /* כתום */
-.arena-color-9 { border-right: 6px solid #d946ef; background: rgba(217, 70, 239, 0.1); } /* מגנטה */
-.arena-color-AL { border-right: 6px solid #ffffff; background: rgba(255, 255, 255, 0.1); } /* לבן */
+/* --- צבעי זירות (לשלב 2) --- */
+.arena-color-1 { border-right: 5px solid #ef4444; background: rgba(239, 68, 68, 0.15) !important; }
+.arena-color-2 { border-right: 5px solid #3b82f6; background: rgba(59, 130, 246, 0.15) !important; }
+.arena-color-3 { border-right: 5px solid #10b981; background: rgba(16, 185, 129, 0.15) !important; }
+.arena-color-4 { border-right: 5px solid #f59e0b; background: rgba(245, 158, 11, 0.15) !important; }
+.arena-color-5 { border-right: 5px solid #8b5cf6; background: rgba(139, 92, 246, 0.15) !important; }
+.arena-color-6 { border-right: 5px solid #ec4899; background: rgba(236, 72, 153, 0.15) !important; }
+.arena-color-7 { border-right: 5px solid #06b6d4; background: rgba(6, 182, 212, 0.15) !important; }
+.arena-color-8 { border-right: 5px solid #f97316; background: rgba(249, 115, 22, 0.15) !important; }
+.arena-color-9 { border-right: 5px solid #d946ef; background: rgba(217, 70, 239, 0.15) !important; }
+.arena-color-AL { border-right: 5px solid #ffffff; background: rgba(255, 255, 255, 0.15) !important; }
 
-.hidden { display: none; }
+/* אנימציות */
+.animate-pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+@keyframes pop {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
