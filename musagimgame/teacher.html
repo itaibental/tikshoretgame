@@ -2,195 +2,113 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ניהול שאלות | ממשק מורה</title>
+    <title>ניהול תוכן | musagimgames</title>
     <style>
-        :root {
-            --primary: #4a90e2;
-            --secondary: #f3f4f6;
-            --accent: #28a745;
-            --danger: #dc3545;
-            --text: #333;
-        }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #eef1f4; color: var(--text); margin: 0; padding: 0; }
-        
-        /* סרגל עליון מקובע */
-        .top-bar { 
-            position: sticky; top: 0; background: white; padding: 15px 30px; 
+        body { font-family: system-ui, sans-serif; background: #f0f2f5; margin: 0; padding: 0; }
+        .toolbar { 
+            background: white; padding: 20px 40px; position: sticky; top: 0; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100; 
             display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000;
         }
-        .controls { display: flex; gap: 15px; align-items: center; }
-        select, button { padding: 10px 15px; border-radius: 8px; border: 1px solid #ccc; font-size: 1em; }
-        button { cursor: pointer; border: none; font-weight: bold; transition: 0.2s; }
-        .btn-load { background: var(--primary); color: white; }
-        .btn-save { background: var(--accent); color: white; width: 150px; }
-        .btn-save:hover { opacity: 0.9; transform: scale(1.05); }
-
-        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
-        
-        /* כרטיס שאלה */
+        .container { max-width: 1000px; margin: 40px auto; padding: 20px; }
         .q-card { 
-            background: white; border-radius: 15px; padding: 25px; margin-bottom: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative;
-            border-right: 8px solid var(--primary);
+            background: white; border-radius: 20px; padding: 30px; margin-bottom: 30px; 
+            border-right: 10px solid #4a90e2; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
-        .q-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
-        .q-index { position: absolute; left: 20px; top: 20px; color: #ccc; font-size: 1.5em; font-weight: bold; }
-
-        label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; font-size: 0.9em; }
         input[type="text"], textarea { 
-            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; 
-            margin-bottom: 15px; box-sizing: border-box; font-family: inherit; font-size: 1em;
+            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; 
+            font-size: 1em; margin: 10px 0; box-sizing: border-box;
         }
+        .ans-row { display: flex; align-items: center; gap: 15px; margin: 10px 0; padding: 10px; border-radius: 10px; background: #f9f9f9; }
+        .ans-row.correct-bg { background: #d4edda; }
         
-        /* עיצוב תשובות */
-        .ans-grid { display: grid; gap: 10px; margin-top: 10px; }
-        .ans-row { 
-            display: flex; align-items: center; gap: 15px; background: #fafafa; 
-            padding: 10px; border-radius: 10px; border: 1px solid #eee;
+        /* מונה תווים */
+        .char-pill { 
+            font-size: 11px; padding: 4px 10px; border-radius: 20px; 
+            background: #eee; color: #666; min-width: 60px; text-align: center;
         }
-        .ans-row.is-correct { background: #e8f5e9; border-color: var(--accent); }
+        .balanced { background: #2ecc71; color: white; }
         
-        .radio-custom { width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent); }
-        
-        /* מונה תווים חכם */
-        .counter-pill {
-            min-width: 65px; text-align: center; padding: 4px 8px; border-radius: 20px;
-            font-size: 0.8em; font-weight: bold; color: white;
-        }
-        .good { background: var(--accent); } /* אורך מאוזן */
-        .warning { background: #f39c12; }    /* פער קטן */
-        .bad { background: var(--danger); }  /* פער גדול */
-
-        .rationale-area { background: #f9f9f9; padding: 15px; border-radius: 10px; margin-top: 15px; }
+        .btn-save { background: #2ecc71; color: white; border: none; padding: 12px 40px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1.1em; }
+        .btn-save:hover { transform: scale(1.05); }
+        select { padding: 10px; border-radius: 10px; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
 
-<div class="top-bar">
-    <div class="controls">
-        <strong>ניהול שאלות:</strong>
-        <select id="ziraSelect">
-            <option value="1">זירה 1 - יסודות</option>
-            <option value="2">זירה 2 - גלובליזציה</option>
-            <option value="3">זירה 3 - עיתונות</option>
-            <option value="4">זירה 4 - דמוקרטיה</option>
-            <option value="5">זירה 5 - דיגיטל</option>
-            <option value="6">זירה 6 - ריאליטי</option>
-            <option value="7">זירה 7 - קליפים</option>
-            <option value="8">זירה 8 - ספורט</option>
-            <option value="9">זירה 9 - פרסום</option>
-            <option value="Al">זירת העל</option>
-        </select>
-        <button class="btn-load" onclick="loadZira()">טען נתונים</button>
-    </div>
+<div class="toolbar">
     <div>
-        <button class="btn-save" id="saveBtn" onclick="saveData()">שמור הכל לענן</button>
+        <strong>בחר זירה:</strong>
+        <select id="ziraSelect">
+            <option value="1">זירה 1</option><option value="2">זירה 2</option>
+            <option value="3">זירה 3</option><option value="4">זירה 4</option>
+            <option value="5">זירה 5</option><option value="6">זירה 6</option>
+            <option value="7">זירה 7</option><option value="8">זירה 8</option>
+            <option value="9">זירה 9</option><option value="Al">זירת העל</option>
+        </select>
+        <button onclick="load()" style="padding:10px 20px; cursor:pointer;">טען נתונים</button>
     </div>
+    <button class="btn-save" id="save-btn" onclick="save()">שמור הכל לענן</button>
 </div>
 
-<div class="container" id="editor">
-    <div style="text-align:center; color:#888; margin-top:100px;">
-        <h2>שלום מורה!</h2>
-        <p>בחר זירה מהתפריט למעלה ולחץ על "טען נתונים" כדי להתחיל בעריכה.</p>
+<div class="container" id="editor-list">
+    <div style="text-align:center; color:#999; margin-top:100px;">
+        <h2>מערכת ניהול השאלות</h2>
+        <p>טען זירה כדי להתחיל בעריכה ותיקון טקסטים.</p>
     </div>
 </div>
 
 <script type="module">
     import { QuizDataManager } from './CloudManager.js';
+    let activeQuestions = [];
+    let activeId = "";
 
-    let currentQuestions = [];
-    let currentId = "";
-
-    window.loadZira = async () => {
-        currentId = document.getElementById('ziraSelect').value;
-        const fallback = window[`DATA_ZIRA_${currentId}`];
-        
-        document.getElementById('editor').innerHTML = "<p>טוען נתונים מהענן...</p>";
-        
-        currentQuestions = await QuizDataManager.getZiraData(currentId, fallback);
-        renderQuestions();
+    window.load = async () => {
+        activeId = document.getElementById('ziraSelect').value;
+        const fallback = window[`DATA_ZIRA_${activeId}`];
+        activeQuestions = await QuizDataManager.getZiraData(activeId, fallback);
+        render();
     };
 
-    function renderQuestions() {
-        const container = document.getElementById('editor');
-        container.innerHTML = currentQuestions.map((q, qIdx) => `
+    function render() {
+        const list = document.getElementById('editor-list');
+        list.innerHTML = activeQuestions.map((q, qI) => `
             <div class="q-card">
-                <div class="q-index">#${qIdx + 1}</div>
-                <label>טקסט השאלה:</label>
-                <input type="text" value="${q.q}" oninput="currentQuestions[${qIdx}].q = this.value">
+                <b>שאלה ${qI+1}:</b>
+                <input type="text" value="${q.q}" oninput="activeQuestions[${qI}].q = this.value">
                 
-                <label>תשובות (סמן את הנכונה):</label>
-                <div class="ans-grid">
-                    ${q.a.map((ans, aIdx) => `
-                        <div class="ans-row ${q.correct === aIdx ? 'is-correct' : ''}" id="row_${qIdx}_${aIdx}">
-                            <input type="radio" class="radio-custom" name="correct_${qIdx}" 
-                                   ${q.correct === aIdx ? 'checked' : ''} 
-                                   onchange="updateCorrect(${qIdx}, ${aIdx})">
-                            
-                            <input type="text" value="${ans}" 
-                                   oninput="updateAnsText(${qIdx}, ${aIdx}, this.value)">
-                            
-                            <div class="counter-pill good" id="count_${qIdx}_${aIdx}">${ans.length} תווים</div>
+                <div class="answers-box">
+                    ${q.a.map((ans, aI) => `
+                        <div class="ans-row ${q.correct === aI ? 'correct-bg' : ''}">
+                            <input type="radio" name="c_${qI}" ${q.correct === aI ? 'checked' : ''} onchange="setCorrect(${qI}, ${aI})">
+                            <input type="text" value="${ans}" oninput="updateA(${qI}, ${aI}, this.value)">
+                            <div class="char-pill" id="cnt_${qI}_${aI}">${ans.length} תווים</div>
                         </div>
                     `).join('')}
                 </div>
-
-                <div class="rationale-area">
-                    <label>הסבר פדגוגי לתשובה הנכונה:</label>
-                    <textarea oninput="currentQuestions[${qIdx}].rationale = this.value">${q.rationale}</textarea>
-                </div>
+                
+                <small>הסבר פדגוגי:</small>
+                <textarea oninput="activeQuestions[${qI}].rationale = this.value">${q.rationale}</textarea>
             </div>
         `).join('');
-        
-        // עדכון צבעי המונים לפי איזון
-        currentQuestions.forEach((_, i) => updateBalanceUI(i));
     }
 
-    window.updateAnsText = (qIdx, aIdx, val) => {
-        currentQuestions[qIdx].a[aIdx] = val;
-        const countEl = document.getElementById(`count_${qIdx}_${aIdx}`);
-        countEl.innerText = val.length + " תווים";
-        updateBalanceUI(qIdx);
+    window.updateA = (qI, aI, val) => {
+        activeQuestions[qI].a[aI] = val;
+        document.getElementById(`cnt_${qI}_${aI}`).innerText = val.length + " תווים";
     };
 
-    window.updateCorrect = (qIdx, aIdx) => {
-        currentQuestions[qIdx].correct = aIdx;
-        renderQuestions(); // רינדור מחדש לצביעת השורה הירוקה
+    window.setCorrect = (qI, aI) => {
+        activeQuestions[qI].correct = aI;
+        render();
     };
 
-    // פונקציית הקסם - בודקת אם התשובות מאוזנות ויזואלית
-    function updateBalanceUI(qIdx) {
-        const lengths = currentQuestions[qIdx].a.map(text => text.length);
-        const max = Math.max(...lengths);
-        const min = Math.min(...lengths);
-        const diff = max - min;
-
-        lengths.forEach((_, aIdx) => {
-            const el = document.getElementById(`count_${qIdx}_${aIdx}`);
-            el.classList.remove('good', 'warning', 'bad');
-            
-            if (diff <= 10) el.classList.add('good');      // הפרש מצוין
-            else if (diff <= 25) el.classList.add('warning'); // פער מורגש
-            else el.classList.add('bad');                // פער גדול מדי
-        });
-    }
-
-    window.saveData = async () => {
-        const btn = document.getElementById('saveBtn');
+    window.save = async () => {
+        const btn = document.getElementById('save-btn');
         btn.innerText = "שומר...";
-        btn.disabled = true;
-        
-        try {
-            await QuizDataManager.updateZiraData(currentId, currentQuestions);
-            alert("השינויים נשמרו בהצלחה בענן! כל התלמידים מעודכנים.");
-        } catch (e) {
-            alert("שגיאה בשמירה לענן.");
-        } finally {
-            btn.innerText = "שמור הכל לענן";
-            btn.disabled = false;
-        }
+        await QuizDataManager.updateZiraData(activeId, activeQuestions);
+        btn.innerText = "שמור הכל לענן";
+        alert("השינויים נשמרו בהצלחה! התלמידים מעודכנים.");
     };
 </script>
 
