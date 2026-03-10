@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, get, set } from "firebase/database";
 
-// הקונפיגורציה שסיפקת
+// הגדרות ה-Firebase שלך
 const firebaseConfig = {
   apiKey: "AIzaSyBLcOg3PNwUwu3s36YmM9jl7Vs9LQUY2oo",
   authDomain: "media-quiz-39f0c.firebaseapp.com",
@@ -16,27 +16,28 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 export const QuizDataManager = {
-    // טעינת שאלות: בודק בענן, אם אין - לוקח מה-JS הסטטי ומעלה לענן
+    // טעינת זירה: בודק בענן, אם ריק - לוקח מהקובץ המקומי ומעלה לענן
     async getZiraData(ziraId, defaultStaticData) {
         try {
             const ziraRef = ref(db, `ziras/zira_${ziraId}`);
             const snapshot = await get(ziraRef);
             
             if (snapshot.exists()) {
-                console.log(`Zira ${ziraId} loaded from cloud.`);
                 return snapshot.val();
             } else {
-                console.log(`Cloud empty for Zira ${ziraId}. Uploading defaults...`);
-                await this.updateZiraData(ziraId, defaultStaticData);
-                return defaultStaticData;
+                if (defaultStaticData) {
+                    await this.updateZiraData(ziraId, defaultStaticData);
+                    return defaultStaticData;
+                }
+                return null;
             }
         } catch (error) {
-            console.error("Cloud Error:", error);
+            console.error("שגיאה בטעינה מהענן:", error);
             return defaultStaticData;
         }
     },
 
-    // שמירת שינויים לענן (לשימוש המורה)
+    // שמירה לענן
     async updateZiraData(ziraId, newData) {
         const ziraRef = ref(db, `ziras/zira_${ziraId}`);
         await set(ziraRef, newData);
