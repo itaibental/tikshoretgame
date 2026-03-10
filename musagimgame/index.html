@@ -2,55 +2,234 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>משחק הזירות הגדול</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>musagimgames | משחק מושגי תקשורת</title>
+    
+    <script src="js/zira1.js"></script><script src="js/zira2.js"></script><script src="js/zira3.js"></script>
+    <script src="js/zira4.js"></script><script src="js/zira5.js"></script><script src="js/zira6.js"></script>
+    <script src="js/zira7.js"></script><script src="js/zira8.js"></script><script src="js/zira9.js"></script>
+    <script src="js/ziraAl.js"></script>
+
     <style>
-        body { font-family: sans-serif; background: #f8f9fa; padding: 20px; }
-        .header { position: sticky; top: 0; background: white; padding: 20px; border-bottom: 2px solid #4a90e2; display: flex; gap: 10px; z-index: 100; }
-        .q-card { background: white; padding: 20px; margin-top: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .ans-group { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
-        input[type="text"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 80%; }
-        .count { font-size: 11px; color: #777; width: 60px; }
+        :root {
+            --primary: #4a90e2;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --bg: #f8f9fa;
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 700px;
+            background: white;
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+        }
+
+        h1 { color: var(--primary); font-size: 2.5em; margin-bottom: 10px; }
+        .subtitle { color: var(--secondary); margin-bottom: 30px; }
+
+        /* תפריט זירות */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 15px;
+        }
+
+        .zira-btn {
+            padding: 20px 10px;
+            background: white;
+            border: 2px solid #edf2f7;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        .zira-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
+        }
+
+        /* אזור המשחק */
+        #game-view { display: none; text-align: right; }
+        
+        .progress-bar {
+            font-size: 0.9em; color: var(--secondary);
+            margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 1.5em; font-weight: 700;
+            margin-bottom: 30px; line-height: 1.4; color: #2d3748;
+        }
+
+        .ans-btn {
+            width: 100%; padding: 18px; margin: 10px 0;
+            border: 2px solid #edf2f7; border-radius: 12px;
+            background: white; cursor: pointer; text-align: right;
+            font-size: 1.1em; transition: 0.2s;
+        }
+
+        .ans-btn:hover:not(:disabled) { border-color: var(--primary); background: #f0f7ff; }
+
+        .correct { background: var(--success) !important; color: white; border-color: var(--success); }
+        .wrong { background: var(--danger) !important; color: white; border-color: var(--danger); }
+
+        .feedback-box {
+            margin-top: 25px; padding: 20px; border-radius: 12px;
+            display: none; animation: fadeIn 0.4s ease;
+        }
+
+        .btn-action {
+            margin-top: 20px; padding: 12px 30px;
+            background: var(--primary); color: white;
+            border: none; border-radius: 10px; font-weight: bold;
+            cursor: pointer; font-size: 1.1em;
+        }
+
+        /* אנימציית טעינה */
+        .loader {
+            border: 5px solid #f3f3f3; border-top: 5px solid var(--primary);
+            border-radius: 50%; width: 50px; height: 50px;
+            animation: spin 1s linear infinite; margin: 30px auto; display: none;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .footer { margin-top: 40px; }
+        .teacher-link { color: #cbd5e0; text-decoration: none; font-size: 0.85em; transition: 0.2s; }
+        .teacher-link:hover { color: var(--primary); }
     </style>
 </head>
 <body>
-    <div class="header">
-        <select id="zSelect">
-            <option value="1">זירה 1</option><option value="2">זירה 2</option><option value="3">זירה 3</option>
-            <option value="4">זירה 4</option><option value="5">זירה 5</option><option value="6">זירה 6</option>
-            <option value="7">זירה 7</option><option value="8">זירה 8</option><option value="9">זירה 9</option>
-            <option value="Al">זירת על</option>
-        </select>
-        <button onclick="load()">טען שאלות</button>
-        <button style="background:#28a745; color:white;" onclick="save()">שמור הכל לענן</button>
-    </div>
-    <div id="list"></div>
 
-   <script type="module">
+<div class="container">
+    <div id="main-menu">
+        <h1>musagimgames</h1>
+        <p class="subtitle">תרגול מושגי תקשורת וקולנוע לבגרות</p>
+        <div class="menu-grid" id="zira-selector"></div>
+    </div>
+
+    <div id="loader" class="loader"></div>
+
+    <div id="game-view">
+        <div class="progress-bar" id="progress">שאלה 1 מתוך --</div>
+        <div class="question-text" id="q-text">טוען שאלה...</div>
+        <div id="answers-container"></div>
+        
+        <div id="feedback" class="feedback-box"></div>
+        
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="next-btn" class="btn-action" style="display:none;" onclick="handleNext()">לשאלה הבאה</button>
+            <button class="btn-action" style="background: var(--secondary);" onclick="location.reload()">חזרה לתפריט</button>
+        </div>
+    </div>
+
+    <div class="footer">
+        <a href="teacher.html" class="teacher-link">ניהול תוכן למורים</a>
+    </div>
+</div>
+
+<script type="module">
     import { QuizDataManager } from './CloudManager.js';
-        let data = [], id = "";
-        window.load = async () => {
-            id = document.getElementById('zSelect').value;
-            data = await QuizDataManager.getZiraData(id, window[`DATA_ZIRA_${id}`]);
-            render();
-        };
-        function render() {
-            document.getElementById('list').innerHTML = data.map((q, qI) => `
-                <div class="q-card">
-                    <b>שאלה ${qI+1}:</b> <input type="text" value="${q.q}" oninput="data[${qI}].q = this.value"><br>
-                    <div class="ans-group">
-                        ${q.a.map((a, aI) => `
-                            <div style="display:flex; gap:10px; align-items:center;">
-                                <input type="radio" name="c_${qI}" ${q.correct === aI ? 'checked' : ''} onchange="data[${qI}].correct=${aI}">
-                                <input type="text" value="${a}" oninput="data[${qI}].a[${aI}]=this.value; this.nextElementSibling.innerText=this.value.length+' תווים'">
-                                <span class="count">${a.length} תווים</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `).join('');
+
+    let questions = [];
+    let currentIndex = 0;
+    const ziraList = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'Al'];
+
+    // יצירת הכפתורים בתפריט
+    const menuGrid = document.getElementById('zira-selector');
+    ziraList.forEach(id => {
+        const btn = document.createElement('button');
+        btn.className = 'zira-btn';
+        const label = id === 'Al' ? 'זירת העל' : `זירה ${id}`;
+        btn.innerHTML = `${label}`;
+        btn.onclick = () => initZira(id);
+        menuGrid.appendChild(btn);
+    });
+
+    // טעינת זירה מהענן
+    async function initZira(ziraId) {
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('loader').style.display = 'block';
+
+        const staticFallback = window[`DATA_ZIRA_${ziraId}`];
+        // קריאה אסינכרונית לענן
+        questions = await QuizDataManager.getZiraData(ziraId, staticFallback);
+
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('game-view').style.display = 'block';
+        
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = questions[currentIndex];
+        document.getElementById('progress').innerText = `שאלה ${currentIndex + 1} מתוך ${questions.length}`;
+        document.getElementById('q-text').innerText = q.q;
+        document.getElementById('feedback').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+
+        const container = document.getElementById('answers-container');
+        container.innerHTML = '';
+
+        q.a.forEach((ansText, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'ans-btn';
+            btn.innerText = ansText;
+            btn.onclick = () => checkAnswer(i, btn);
+            container.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selected, btn) {
+        const q = questions[currentIndex];
+        const allBtns = document.querySelectorAll('.ans-btn');
+        
+        allBtns.forEach(b => b.disabled = true);
+
+        if (selected === q.correct) {
+            btn.classList.add('correct');
+        } else {
+            btn.classList.add('wrong');
+            allBtns[q.correct].classList.add('correct');
         }
-        window.save = async () => { await QuizDataManager.updateZiraData(id, data); alert("נשמר בענן!"); };
-    </script>
+
+        const feedback = document.getElementById('feedback');
+        feedback.style.display = 'block';
+        feedback.style.backgroundColor = selected === q.correct ? '#f0fff4' : '#fff5f5';
+        feedback.style.border = `1px solid ${selected === q.correct ? '#c6f6d5' : '#fed7d7'}`;
+        feedback.innerHTML = `<strong>${selected === q.correct ? 'נכון!' : 'טעות...'}</strong><br>${q.rationale}`;
+
+        if (currentIndex < questions.length - 1) {
+            document.getElementById('next-btn').style.display = 'inline-block';
+        }
+    }
+
+    window.handleNext = () => {
+        currentIndex++;
+        renderQuestion();
+    };
+</script>
+
 </body>
 </html>
-
