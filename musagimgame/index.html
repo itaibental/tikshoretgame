@@ -3,6 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>musagimgames | משחק המושגים</title>
+    <script src="js/zira1.js"></script><script src="js/zira2.js"></script><script src="js/ziraAl.js"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { width: 90%; max-width: 600px; background: white; padding: 40px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-top: 30px; }
+        .card-btn { padding: 20px; border: 2px solid #eee; border-radius: 15px; cursor: pointer; transition: 0.3s; font-weight: bold; background: white; }
+        .card-btn:hover { border-color: #4a90e2; transform: translateY(-5px); color: #4a90e2; }
+        #game-view { display: none; text-align: right; }
+        .ans-btn { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 12px; background: white; cursor: pointer; text-align: right; font-size: 1.1em; }
+        .correct { background: #2ecc71 !important; color: white; }
+        .wrong { background: #e74c3c !important; color: white; }
+        .feedback { margin-top: 20px; padding: 15px; border-radius: 10px; display: none; background: #e7f3ff; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #4a90e2; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="menu">
+        <h1 style="color:#4a90e2">musagimgames</h1>
+        <p>תרגול מושגי תקשורת בענן</p>
+        <div class="menu-grid" id="ziraMenu"></div>
+        <a href="teacher.html" style="display:block; margin-top:40px; color:#ccc; text-decoration:none; font-size:0.8em">ממשק מורה</a>
+    </div>
+
+    <div id="loader" class="loader"></div>
+
+    <div id="game-view">
+        <h3 id="qText"></h3>
+        <div id="ansBox"></div>
+        <div id="fb" class="feedback"></div>
+        <button id="nextBtn" style="display:none; margin-top:20px; padding:10px 30px; background:#4a90e2; color:white; border:none; border-radius:8px; cursor:pointer;" onclick="nextQ()">שאלה הבאה</button>
+    </div>
+</div>
+
+<script type="module">
+    import { QuizDataManager } from './CloudManager.js';
+    let questions = [], currentIndex = 0;
+    const ziraList = ['1','2','3','4','5','6','7','8','9','Al'];
+
+    const menu = document.getElementById('ziraMenu');
+    ziraList.forEach(z => {
+        const b = document.createElement('div');
+        b.className = 'card-btn';
+        b.innerHTML = `זירה ${z === 'Al' ? 'על' : z}`;
+        b.onclick = () => start(z);
+        menu.appendChild(b);
+    });
+
+    async function start(id) {
+        document.getElementById('menu').style.display = 'none';
+        document.getElementById('loader').style.display = 'block';
+        questions = await QuizDataManager.getZiraData(id, window[`DATA_ZIRA_${id}`]);
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('game-view').style.display = 'block';
+        render();
+    }
+
+    function render() {
+        const q = questions[currentIndex];
+        document.getElementById('qText').innerText = q.q;
+        document.getElementById('fb').style.display = 'none';
+        document.getElementById('nextBtn').style.display = 'none';
+        const box = document.getElementById('ansBox');
+        box.innerHTML = '';
+        q.a.forEach((a, i) => {
+            const b = document.createElement('button');
+            b.className = 'ans-btn';
+            b.innerText = a;
+            b.onclick = () => {
+                document.querySelectorAll('.ans-btn').forEach(btn => btn.disabled = true);
+                if(i === q.correct) b.classList.add('correct');
+                else { b.classList.add('wrong'); document.querySelectorAll('.ans-btn')[q.correct].classList.add('correct'); }
+                document.getElementById('fb').innerHTML = q.rationale;
+                document.getElementById('fb').style.display = 'block';
+                if(currentIndex < questions.length -1) document.getElementById('nextBtn').style.display = 'block';
+            };
+            box.appendChild(b);
+        });
+    }
+    window.nextQ = () => { currentIndex++; render(); };
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>musagimgames | עולם המושגים</title>
     
     <script src="js/zira1.js"></script><script src="js/zira2.js"></script><script src="js/zira3.js"></script>
@@ -258,3 +348,4 @@
 
 </body>
 </html>
+
